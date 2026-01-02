@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.10)
+
+project(workHosting CXX)
+
+file(GLOB_RECURSE ${CMAKE_PROJECT_NAME}_SRC LIST_DIRECTORIES FALSE ./src/*.cpp)
+
+set(${CMAKE_PROJECT_NAME}_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include")
+if(${CMAKE_PROJECT_NAME}_SRC)
+	set(${CMAKE_PROJECT_NAME}_lib_FOUND)
+	add_library(${CMAKE_PROJECT_NAME}_LIB STATIC ${${CMAKE_PROJECT_NAME}_SRC})
+	target_include_directories(${CMAKE_PROJECT_NAME}_LIB 
+		PUBLIC ${${CMAKE_PROJECT_NAME}_INCLUDE_DIR})
+endif()
+
+
