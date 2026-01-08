@@ -4,6 +4,9 @@ tags
 build-release
 build-debug
 compile_commands.json
+.env
+userver
+
 # Prerequisites
 *.d
 
