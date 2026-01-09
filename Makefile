@@ -8,12 +8,12 @@ build-debug build-release: %: %
 .PHONY: cmake-debug
 cmake-debug: build-debug
 	cmake -S . -B $< ${CMAKE_DEBUG_FLAGS}
-	cp ./$</compile_commands.json .
+	if [ -e ./$</compile_commands.json ]; then cp ./$</compile_commands.json .; fi
 
 .PHONY: cmake-release
 cmake-release: build-release
 	cmake -S . -B $< ${CMAKE_RELEASE_FLAGS}
-	cp ./$</compile_commands.json .
+	if [ -e ./$</compile_commands.json ]; then cp ./$</compile_commands.json .; fi
 
 .PHONY: clean
 clean:

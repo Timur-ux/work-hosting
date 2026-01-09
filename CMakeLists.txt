@@ -13,7 +13,7 @@ if(${CMAKE_PROJECT_NAME}_SRC)
 endif()
 
  # setup userver
-find_package(userver COMPONENTS core mongo chaotic QUIET)
+find_package(userver COMPONENTS core mongo chaotic redis postgresql QUIET)
 if(NOT userver_FOUND)
 	message(STATUS "Global userver installation not found. Trying to fetch local userver at ${CMAKE_CURRENT_SOURCE_DIR}/third_party/userver directory")
 	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/userver)
