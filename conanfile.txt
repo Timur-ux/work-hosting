@@ -1,0 +1,7 @@
+[requires]
+libev/4.33
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout

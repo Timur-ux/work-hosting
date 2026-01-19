@@ -1,0 +1,41 @@
+components:
+  schemas:
+    RegisterResponseBody:
+      type: object
+      additionalProperties: false
+      properties:
+        gv-name:
+          type: string
+        group:
+          type: integer
+          minimum: 1
+        first-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        last-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        father-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        email:
+          type: string
+          minLength: 1
+          maxLength: 128
+        password:
+          type: string
+          minLength: 8
+
+
+    RegisterRequestBody:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          default: "success"
+        message:
+          type: string

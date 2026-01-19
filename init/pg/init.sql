@@ -2,6 +2,7 @@
 CREATE TABLE students (
 	id						SERIAL PRIMARY KEY,
 	gv_name				VARCHAR(60) NOT NULL UNIQUE,
+	group					INTEGER NOT NULL,
 	first_name		VARCHAR(30) NOT NULL,
 	last_name			VARCHAR(30) NOT NULL,
 	father_name		VARCHAR(30) NOT NULL,
@@ -21,7 +22,7 @@ CREATE TABLE students_update_history (
 	update_time		TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TYPE ACTION_TYPE AS ENUM('register', 'update_profile', 'send_work_to_check', 'send_message');
+CREATE TYPE ACTION_TYPE AS ENUM('register', 'login', 'update_profile', 'send_work_to_check', 'send_message');
 
 CREATE TABLE students_actions (
 	id					SERIAL PRIMARY KEY,
