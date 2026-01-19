@@ -3,6 +3,28 @@
 shopt -s nullglob
 set -o pipefail
 
+# constants
+COPY_DOCS=true
+
+# init variables
+organizationName="mai_labs_2025_2026"
+backupDir="/tmp/backups"
+worksDir="/tmp/works"
+docsDir="/tmp/docs"
+
+if (( "$#" < "3" )); then
+	echo "Usage: $0 <Lab work type> <Lab work number> <student GV name>"
+	exit 0
+fi
+
+workType="$1"
+workNumber="$2"
+student="$3"
+
+workName="${workType}${workNumber}-${student}"
+logFile="/tmp/$workName.log"
+
+# Status functions
 stepStart() {
 	if (( "$#" < 1 )); then echo "Usage: $0 <Step name>"; exit 1; fi
 	echo "[LOG] Step $1 started..."
@@ -20,27 +42,20 @@ stepFailed() {
 	exit 1
 }
 
-if (( "$#" < "2" )); then
-	echo "Usage: $0 <Lab work name> <student GV name>"
-	exit 0
-fi
-
-organizationName="mai_labs_2025_2026"
-
-LR="$1"
-student="$2"
-
-workName="$LR-$student"
-logFile="/tmp/$workName.log"
-
-# create dir for backups
-backupDir="/tmp/backups"
+# create dir for backups(if not exist)
 if [ ! -d "$backupDir" ]; then
 	mkdir -p "$backupDir"
 fi
 
-# create dir for works (should be mounted for later usage)
-worksDir="/mnt/storage/raison/works"
+# create dir for works (should be mounted for usage from container)
+if [ ! -d "$worksDir" ]; then
+	mkdir -p "$worksDir"
+fi
+
+# create dir for documents (should be mounted for usage from container)
+if [ ! -d "$docsDir" ]; then
+	mkdir -p "$docsDir"
+fi
 
 # if file exist -- do backup
 if [ -f "$logFile" ]; then
@@ -61,9 +76,8 @@ doStep() {
 	fi
 
 	stepStart "$1" >> "$logFile"
-	message="$($2)"
-	local retCode="$?"
-	if [ "$retCode" != "0" ]; then 
+	message="$($2 2>/dev/stdout)"
+	if [ "$?" != "0" ]; then
 		stepFailed "$1" "$message" >> "$logFile"
 	else
 		stepPassed "$1" >> "$logFile"
@@ -73,6 +87,11 @@ doStep() {
 # step 0: fetching repo
 fetchRepository() {
 	local gvSshLink="ssh://git@gitverse.ru:2222/${organizationName}/${workName}.git"
+	if [[ -d "${worksDir}/${workName}" ]]; then
+		cd "${worksDir}/${workName}" && \
+			git clean -fd && git fetch origin && git reset --hard
+		return $?
+	fi
 	message=$(git clone "$gvSshLink" "${worksDir}/${workName}" 2>/dev/stdout)
 	if [ "$?" != "0" ]; then
 		echo "$message"
@@ -82,3 +101,115 @@ fetchRepository() {
 }
 doStep "Fetching repository" fetchRepository
 
+cd "${worksDir}/${workName}"
+# step 1: pull solution branch
+pullSolutionBranch() {
+	message=$(git pull origin solution)
+	if [ "$?" != "0" ]; then
+		echo "$message"
+		return 1
+	fi
+	return 0
+}
+doStep "Pull solution branch" pullSolutionBranch
+
+# step 2: switch to solution branch
+switchToSolutionBranch() {
+	message=$(git checkout solution --)
+	if [ "$?" != "0" ]; then
+		echo "$message"
+		return 1
+	fi
+	return 0
+}
+doStep "Switch to solution branch" switchToSolutionBranch
+
+# step 3: check solution/ and solution/report/ folders
+checkFolders() {
+	if [ ! -d "$(pwd)/solution" ]; then
+		echo "Folder solution/ not found"
+		return 1
+	elif [ ! -d "$(pwd)/solution/report" ]; then
+		echo "Folder solution/report/ not found"
+		return 1
+	fi
+	return 0
+}
+doStep "Check solution/ and solution/report/ folders" checkFolders
+
+cd ./solution
+# step 3: check for report and applications
+checkReportAndApplications() {
+	local filesCount="$(ls ./report | wc -l)"
+	local rusLRName="ЛР"
+	if [[ "$workType" == "KP" ]]; then
+		rusLRName="КП"
+	fi
+	if [[ "$filesCount" != "2" ]]; then
+		echo "Expected 2 files in solution/report/ folder, but given $filesCount"
+		return 1
+	fi
+	local spacedFiles=$(ls ./report | grep -E "\s")
+	if [[ ! -z "$spacedFiles" ]]; then
+		echo "Spaces in file names not allowed: $spacedFiles"
+		return 1
+	fi
+
+	repoName=$(ls ./report | grep -E "^${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")
+	echo "$repoName"
+	if [[ -z "$repoName" ]]; then
+		echo "Report name not match required pattern like [${rusLRName}${workNumber}_ИвановИИ_125_12.pdf]"
+		echo "Or it not exist"
+		return 1
+	fi
+	applicationName=$(ls ./report | grep -E "^Приложение${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")
+	if [[ -z "$repoName" ]]; then
+		echo "Report's application name not match required pattern like [Приложение${rusLRName}${workNumber}_ИвановИИ_125_12.pdf]"
+		echo "Or it not exist"
+		return 1
+	fi
+}
+doStep "Check report and application" checkReportAndApplications
+
+# step 3.1: copy report and application if COPY_DOCS = true
+copyDocs() {
+	message=$(cp ./report/* $docsDir 2>/dev/stdout)
+	if [[ "$?" != "0" ]]; then
+		echo "Unexpected error while copying report files, tell developer to fix it: $message"
+		return 1
+	fi
+}
+if [[ $COPY_DOCS ]]; then
+	doStep "Copy docs" copyDocs
+fi
+
+# step 4: check for files outside solution folder
+
+printFilesOutsideSolutionDir() {
+	local badFiles=0
+	git diff --name-only origin/solution origin/master -- | while read line; do
+		echo "$line" >> /tmp/log.log
+		if [[ "$line" != solution* && "$line" != \"solution* ]]; then
+			echo "$line"
+			badFiles=$(( $badFiles + 1 ))
+		fi
+	done
+	return $badFiles
+}
+
+checkFilesOutsideSolutionDir() {
+	message=$(printFilesOutsideSolutionDir)
+	echo "$message"
+	return 1
+	if [[ "$?" != "0" ]]; then
+		echo "Error while checking files outside solution directory:"
+		echo "$message"
+		echo "-------------hint--------------"
+		echo "if you need add files to .gitignore,"
+		echo "place .gitignore file into solution/ directory"
+		return 1
+	fi
+	return 0
+}
+
+doStep "Check for files outside solution/ directory" checkFilesOutsideSolutionDir
