@@ -3,14 +3,26 @@
 shopt -s nullglob
 set -o pipefail
 
+user="checker"
+if [ ! -z $( id "$user" | grep "no such user") ]; then
+	sudo useradd "$user" -d "/home/$user"
+	sudo mkdir "/home/$user"
+	sudo chown "${user}:${user}" "/home/$user"
+fi
+
+# sudo under $user
+if [ "$(whoami)" != "$user" ]; then
+	sudo -u "$user"
+fi
+
 # constants
 COPY_DOCS=true
 
 # init variables
 organizationName="mai_labs_2025_2026"
-backupDir="/tmp/backups"
-worksDir="/tmp/works"
-docsDir="/tmp/docs"
+backupDir="/home/$user/backups"
+worksDir="/home/$user/works"
+docsDir="/home/$user/docs"
 
 if (( "$#" < "3" )); then
 	echo "Usage: $0 <Lab work type> <Lab work number> <student GV name>"
@@ -22,7 +34,7 @@ workNumber="$2"
 student="$3"
 
 workName="${workType}${workNumber}-${student}"
-logFile="/tmp/$workName.log"
+logFile="${docsDir}/logs/$workName.log"
 
 # Status functions
 stepStart() {
@@ -55,6 +67,22 @@ fi
 # create dir for documents (should be mounted for usage from container)
 if [ ! -d "$docsDir" ]; then
 	mkdir -p "$docsDir"
+	if [ ! -d "$docsDir/logs" ]; then
+		mkdir -p "${docsDir}/logs"
+	fi
+fi
+
+# change owner of dirs
+if [ -z $(stat -c "%U:%G" "$backupDir" | grep "$user") ]; then
+	sudo chown "${user}:${user}" "$backupDir" -R
+fi
+
+if [ -z $(stat -c "%U:%G" "$worksDir" | grep "$user") ]; then
+	sudo chown "${user}:${user}" "$worksDir" -R
+fi
+
+if [ -z $(stat -c "%U:%G" "$docsDir" | grep "$user") ]; then
+	sudo chown "${user}:${user}" "$docsDir" -R
 fi
 
 # if file exist -- do backup
@@ -190,7 +218,7 @@ printFilesOutsideSolutionDir() {
 	git diff --name-only origin/solution origin/master -- | while read line; do
 		echo "$line" >> /tmp/log.log
 		if [[ "$line" != solution* && "$line" != \"solution* ]]; then
-			echo "$line"
+			echo "$(pwd)/$line not in solution/ directory!"
 			badFiles=$(( $badFiles + 1 ))
 		fi
 	done
@@ -199,8 +227,6 @@ printFilesOutsideSolutionDir() {
 
 checkFilesOutsideSolutionDir() {
 	message=$(printFilesOutsideSolutionDir)
-	echo "$message"
-	return 1
 	if [[ "$?" != "0" ]]; then
 		echo "Error while checking files outside solution directory:"
 		echo "$message"
@@ -213,3 +239,32 @@ checkFilesOutsideSolutionDir() {
 }
 
 doStep "Check for files outside solution/ directory" checkFilesOutsideSolutionDir
+
+# step 5: check Make build
+checkMakeBuild() {
+	if [ ! -f ./Makefile ]; then
+		echo "File solution/Makefile not found!"
+		return 1
+	fi
+
+	message=$(sed 's/gcc/gcc $CFLAGS/' -i ./Makefile 2>/dev/stdout)
+	if [ "$?" != "0" ]; then
+		echo "$message"
+		return 1
+	fi
+
+	message=$(CFLAGS="$CFLAGS -Wextra -Wall -Wfloat-equal -pedantic" make 2>/dev/stdout)
+	if [ "$?" != "0" ]; then
+		echo "$message"
+		return 1
+	fi
+
+	if [ ! -f ./main.out ]; then
+		echo "Make build success but main.out file not found in solution/ directory!"
+		return 1
+	fi
+
+	return 0
+}
+doStep "Build program" checkMakeBuild
+
