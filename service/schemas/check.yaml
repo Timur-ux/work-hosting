@@ -1,0 +1,18 @@
+components:
+  schemas:
+    WorkRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        workType:
+          type: string
+          default: LR
+        workNumber:
+          type: integer
+          minimum: 1
+        gvName:
+          type: string
+
+    SendWorkResponse:
+      type: string
+

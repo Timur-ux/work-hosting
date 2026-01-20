@@ -4,15 +4,9 @@ shopt -s nullglob
 set -o pipefail
 
 user="checker"
-if [ ! -z $( id "$user" | grep "no such user") ]; then
-	sudo useradd "$user" -d "/home/$user"
-	sudo mkdir "/home/$user"
-	sudo chown "${user}:${user}" "/home/$user"
-fi
-
-# sudo under $user
 if [ "$(whoami)" != "$user" ]; then
-	sudo -u "$user"
+	echo "script checker must be started under the $user user"
+	exit 1
 fi
 
 # constants
@@ -70,19 +64,6 @@ if [ ! -d "$docsDir" ]; then
 	if [ ! -d "$docsDir/logs" ]; then
 		mkdir -p "${docsDir}/logs"
 	fi
-fi
-
-# change owner of dirs
-if [ -z $(stat -c "%U:%G" "$backupDir" | grep "$user") ]; then
-	sudo chown "${user}:${user}" "$backupDir" -R
-fi
-
-if [ -z $(stat -c "%U:%G" "$worksDir" | grep "$user") ]; then
-	sudo chown "${user}:${user}" "$worksDir" -R
-fi
-
-if [ -z $(stat -c "%U:%G" "$docsDir" | grep "$user") ]; then
-	sudo chown "${user}:${user}" "$docsDir" -R
 fi
 
 # if file exist -- do backup
