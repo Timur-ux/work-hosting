@@ -16,7 +16,9 @@ class WorkHolder : public userver::components::ComponentBase {
 public:
 	enum class TaskResult {
 		kSucceed,
-		kFailed
+		kFailed,
+		kRunning,
+		kUndefined
 	};
   static constexpr std::string_view kName = "work-holder";
 
@@ -25,7 +27,7 @@ public:
 
 	void addTask(const Work & work);
 	bool contains(const Work & work) const;
-
+	TaskResult getStatus(const Work & work);
 private:
 	template<typename T>
 	using Variable = userver::concurrent::Variable<T>;

@@ -18,11 +18,13 @@ public:
 	const char * typeAsString() const;
 	const std::string &gvName() const;
 	unsigned short number() const;
-
-	std::string to_string() const; // <work type><work number>-<gvName> 
+	const std::string & to_string() const; // <work type><work number>-<gvName> 
 private:
+	std::string to_string_() const;
+
   Type type_;
   unsigned short number_;
 	std::string gvName_;
+	std::string stringView_;
 };
 #endif // !WORK_HPP_

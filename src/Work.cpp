@@ -6,6 +6,7 @@ Work::Work(Type type, unsigned short number, const std::string &gvName)
 	: type_(type), number_(number), gvName_(gvName) {
 	if(number > MAX_WORK_NUMBER) 
 		throw std::invalid_argument("Work number greater than MAX_WORK_NUMBER");
+	stringView_ = to_string_();
 }
 
 Work::Type Work::type() const {
@@ -23,6 +24,9 @@ unsigned short Work::number() const {
 	return number_;
 }
 
-std::string Work::to_string() const {
+std::string Work::to_string_() const {
 	return std::format("{}{}-{}", typeAsString(), number_, gvName_);
+} 
+const std::string & Work::to_string() const {
+	return stringView_;
 } 
