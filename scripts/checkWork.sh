@@ -20,14 +20,18 @@ backupDir="/home/$user/backups"
 worksDir="/home/$user/works"
 docsDir="/home/$user/docs"
 
-if (( "$#" < "3" )); then
-	echo "Usage: $0 <Lab work type> <Lab work number> <student GV name>"
-	exit 0
-fi
+# if (( "$#" < "3" )); then
+# 	echo "Usage: $0 <Lab work type> <Lab work number> <student GV name>"
+# 	exit 0
+# fi
+#
+# workType="$1"
+# workNumber="$2"
+# student="$3"
 
-workType="$1"
-workNumber="$2"
-student="$3"
+read workType
+read workNumber
+read student
 
 workName="${workType}${workNumber}-${student}"
 logFile="${docsDir}/logs/$workName.log"
