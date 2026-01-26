@@ -35,7 +35,7 @@ private:
 	using task_t = userver::engine::TaskWithResult<TaskResult>;
 	Variable<std::list<task_t>> tasks_;
 	Variable<std::unordered_map<std::string, std::list<task_t>::iterator>> pointers_;
-	userver::concurrent::Variable<size_t, userver::engine::SharedMutex> runningTasks_ = 0;
+	userver::concurrent::Variable<size_t> runningTasks_ = 0;
 
 	userver::engine::TaskProcessor & taskProcessor_;
 

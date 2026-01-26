@@ -1,0 +1,29 @@
+components_manager:
+    task_processors:
+        main-task-processor:
+            worker_threads: 4
+
+        fs-task-processor:
+            worker_threads: 1
+
+    components:
+        server:
+            listener:
+                port: 8080
+        logging:
+            loggers:
+                default:
+                    file_path: '/logs/service.log'
+                    level: debug
+                    overflow_behavior: discard
+
+
+        send-work-handler:
+            path: /send
+            method: POST
+            task_processor: main-task-processor
+
+        work-holder:
+          task-processor: main-task-processor
+          max-running-tasks: 10
+          max-work-check-wait-time-ms: 10000

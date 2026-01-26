@@ -12,9 +12,9 @@ Work workMap(const check::WorkRequest &requestBody) {
   Work::Type type =
       requestBody.workType == "LR" ? Work::Type::LR : Work::Type::KP;
   if (!requestBody.workNumber.has_value())
-    throw userver::server::handlers::ResourceNotFound("Work number not set!");
+    throw userver::server::handlers::ResourceNotFound(userver::server::handlers::ExternalBody{"Work number not set!"});
   if (!requestBody.gvName.has_value())
-    throw userver::server::handlers::ResourceNotFound("Gitverse name not set!");
+    throw userver::server::handlers::ResourceNotFound(userver::server::handlers::ExternalBody{"Gitverse name not set!"});
 
   return Work(type, static_cast<unsigned short>(*requestBody.workNumber),
               *requestBody.gvName);

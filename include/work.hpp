@@ -1,6 +1,7 @@
 #ifndef WORK_HPP_
 #define WORK_HPP_
 #include <string>
+#include <string_view>
 #pragma once
 
 #ifndef MAX_WORK_NUMBER
@@ -19,6 +20,7 @@ public:
 	const std::string &gvName() const;
 	unsigned short number() const;
 	const std::string & to_string() const; // <work type><work number>-<gvName> 
+	static Work from_string(std::string_view);
 private:
 	std::string to_string_() const;
 

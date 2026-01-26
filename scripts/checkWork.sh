@@ -4,9 +4,11 @@ shopt -s nullglob
 set -o pipefail
 
 user="checker"
-if [ "$(whoami)" != "$user" ]; then
-	echo "script checker must be started under the $user user"
-	exit 1
+if [ "$(whoami)" == "root" ]; then
+	if [ ! -z "$(id $user 2>/dev/stdout | grep "no such")" ]; then
+		adduser -u 1000 -m "$checker"
+	fi
+	su "$user"
 fi
 
 # constants

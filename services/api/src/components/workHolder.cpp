@@ -1,4 +1,5 @@
 #include "components/workHolder.hpp"
+#include "work.hpp"
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -18,14 +19,13 @@ WorkHolder::WorkHolder(const userver::components::ComponentConfig &config,
                        const userver::components::ComponentContext &context)
     : ComponentBase(config, context),
       taskProcessor_(context.GetTaskProcessor(
-          config["task-processor"].As<std::string_view>())),
+          config["task-processor"].As<std::string>())),
       maxRunningTasks_(config["max-running-tasks"].As<size_t>()),
       maxWorkCheckWaitTime_ms(
           config["max-work-check-wait-time-ms"].As<size_t>()) {}
 
 userver::yaml_config::Schema WorkHolder::GetStaticConfigSchema() {
-  return userver::yaml_config::MergeSchemas<userver::components::ComponentBase>(
-      R"(
+  return userver::yaml_config::MergeSchemas<userver::components::ComponentBase>(R"(
 type: object
 description: Holds task with works checking
 additionalProperties: false
@@ -34,13 +34,13 @@ properties:
     type: string
     description: name of the task processor the tasks will run on
   max-running-tasks:
-		type: integer
-		description: maximum quantity simultaniously running tasks
-	max-work-check-wait-time-ms:
-		type: integer
-		minimum: 5000
-		description: maximum amount time to check the work in milliseconds
-	)");
+    type: integer
+    description: maximum quantity simultaniously running tasks
+  max-work-check-wait-time-ms:
+    type: integer
+    minimum: 5000
+    description: maximum amount time to check the work in milliseconds
+)");
 }
 
 void WorkHolder::addTask(const Work &work) {
@@ -52,22 +52,25 @@ void WorkHolder::addTask(const Work &work) {
   auto it = tasks->insert(
       std::end(*tasks),
       userver::utils::Async(
-          taskProcessor_, std::format("check-work[{}]", work.to_string()),
-          [&work, this]() {
+          taskProcessor_, "check-work",
+          [](Work work, long maxTimeout_ms) {
             int retCode;
             auto start = std::chrono::system_clock::now();
+						LOG_WARNING() << "STARTING THREAD";
             std::thread thread{[&work, &retCode]() {
               std::cout.flush();
               // TODO: Add logic for externally point to script file
+							// TODO: add validator to work data(Exploit oppotunity here)
+							LOG_WARNING() << std::format("$HOME/scripts/checkWork.sh {} {} {}", work.typeAsString(), work.number(), work.gvName());
               retCode = std::system(
                   std::format("$HOME/scripts/checkWork.sh {} {} {}",
                               work.typeAsString(), work.number(), work.gvName())
                       .c_str());
-            }};
+            } };
             auto end = system_clock::now();
             auto timeSpan_ms = duration_cast<milliseconds>(end - start).count();
             while (!thread.joinable() &&
-                   timeSpan_ms < maxWorkCheckWaitTime_ms) {
+                   timeSpan_ms < maxTimeout_ms) {
               userver::engine::InterruptibleSleepFor(milliseconds{5000});
               end = system_clock::now();
               timeSpan_ms = duration_cast<milliseconds>(end - start).count();
@@ -77,12 +80,14 @@ void WorkHolder::addTask(const Work &work) {
                                         ? TaskResult::kSucceed
                                         : TaskResult::kFailed;
             return thread.detach(), TaskResult::kFailed;
-          }));
-  (*pointers_.Lock())[work.to_string()] = it;
+          }, work, maxWorkCheckWaitTime_ms));
+  auto pointers = pointers_.Lock();
+	(*pointers)[work.to_string()] = it;
 }
 
 bool WorkHolder::contains(const Work &work) const {
-  return (*pointers_.Lock()).contains(work.to_string());
+	auto pointers = pointers_.Lock();
+  return (*pointers).contains(work.to_string());
 }
 
 WorkHolder::TaskResult WorkHolder::getStatus(const Work &work) {
