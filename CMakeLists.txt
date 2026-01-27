@@ -16,7 +16,8 @@ if(${CMAKE_PROJECT_NAME}_SRC)
 endif()
 
 # setup zeromq
-add_subdirectory(third_party/zeromq)
+add_subdirectory(third_party/libzmq)
+add_subdirectory(third_party/cppzmq/)
 
 #  # setup userver
 # find_package(userver COMPONENTS core chaotic redis postgresql QUIET)
