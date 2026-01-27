@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <unistd.h>
-#include <zmq.h>
+#include "zmq.h"
 
 void startJob(Work work) {
   int pipefd[2];
@@ -33,8 +33,10 @@ void startJob(Work work) {
 }
 
 int main(int argc, const char *argw[]) {
-	Work work{Work::Type::LR, 12, "gerik"};
-	startJob(std::move(work));
+	// Work work{Work::Type::LR, 12, "gerik"};
+	// startJob(std::move(work));
+
+	zmq::poller_t poller;
 
 	wait(NULL);
 	return 0;
