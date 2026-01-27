@@ -1,4 +1,0 @@
-[submodule "third_party/zeromq"]
-	path = third_party/zeromq
-	url = git@github.com:zeromq/libzmq.git
-	branch = v4.3.5
