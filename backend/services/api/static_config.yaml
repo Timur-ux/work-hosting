@@ -13,7 +13,7 @@ components_manager:
         logging:
             loggers:
                 default:
-                    file_path: '/logs/service.log'
+                    file_path: '/logs/api.log'
                     level: debug
                     overflow_behavior: discard
 
@@ -24,6 +24,3 @@ components_manager:
             task_processor: main-task-processor
 
         work-holder:
-          task-processor: main-task-processor
-          max-running-tasks: 10
-          max-work-check-wait-time-ms: 10000

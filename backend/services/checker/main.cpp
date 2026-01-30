@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+
 void startJob(Work work) {
   int pipefd[2];
   if (pipe(pipefd) == -1)

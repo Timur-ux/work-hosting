@@ -1,15 +1,48 @@
 services:
-  postgres:
-    image: postgres:latest
-    restart: always
+  # postgres:
+  #   image: postgres:latest
+  #   restart: always
+  #   environment:
+  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
+  #     POSTGRES_USER: "${POSTGRES_USER:-admin}"
+  #     POSTGRES_DB: "workHosting"
+  #   volumes:
+  #     - "./init/pg:/docker-entrypoint-initdb.d:ro"
+  #     - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
+  #   networks:
+  #     - backend-1
+
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/api.dockerfile
     environment:
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
-      POSTGRES_USER: "${POSTGRES_USER:-admin}"
-      POSTGRES_DB: "workHosting"
+      CHECKER_ADDR: "tcp://checker:55555"
     volumes:
-      - "./init/pg:/docker-entrypoint-initdb.d:ro"
-      - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
+      - "${LOG_PATH:-/tmp}/api:/logs"
+    depends_on:
+      - checker
+      # - postgresql
+    networks:
+      - backend-1
+      - backend-2
+
+  checker:
+    build:
+      context: .
+      dockerfile: ./docker/checker.dockerfile
+    environment:
+      CHECKER_ADDR: "tcp://checker:55555"
+      LOG_PATH: "/logs/checker.log"
+    volumes:
+      - "${LOG_PATH:-/tmp}/checker:/logs"
+      - "${CHECKER_DATA:-/tmp}/checkerData:/home/checker"
+    networks:
+      - backend-2
 
 networks:
-  backend:
+  backend-1:
+    driver: bridge
+
+  backend-2:
     driver: bridge

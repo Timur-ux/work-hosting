@@ -1,9 +1,8 @@
 .git
 tags
 **/.cache/
-**/build/
-build-release
-build-debug
+**/build-release
+**/build-debug
 compile_commands.json
 .env
 

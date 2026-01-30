@@ -1,11 +1,9 @@
-tags
-**/.cache/
-**/build/
-build-release
-build-debug
+**/tags
+**/.cache
+**/build-release
+**/build-debug
 compile_commands.json
 .env
-userver
 
 # Prerequisites
 *.d
@@ -39,3 +37,4 @@ userver
 *.exe
 *.out
 *.app
+

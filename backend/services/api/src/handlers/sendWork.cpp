@@ -35,11 +35,6 @@ SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
   auto requestBody = request_json.As<check::WorkRequest>();
   Work work = impl::workMap(requestBody);
 
-  if (workHolder_.contains(work))
-    return userver::formats::json::ValueBuilder{
-        check::SendWorkResponse{"Ok, already checking"}}
-        .ExtractValue();
-
   workHolder_.addTask(work);
   return userver::formats::json::ValueBuilder{
       check::SendWorkResponse{"Ok, added to check queue"}}
