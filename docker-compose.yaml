@@ -10,7 +10,7 @@ services:
   #     - "./init/pg:/docker-entrypoint-initdb.d:ro"
   #     - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
   #   networks:
-  #     - backend-1
+  #     - backend-db
 
   api:
     build:
@@ -20,16 +20,16 @@ services:
       CHECKER_ADDR: "tcp://checker:55555"
     volumes:
       - "${LOG_PATH:-/tmp}/api/:/logs/"
-    ports:
-      - "8080:8080"
     security_opt:
       - seccomp=unconfined
     depends_on:
       - checker
       # - postgresql
     networks:
-      - backend-1
-      - backend-2
+      - frontend
+      - backend-api
+      - backend-checker
+      # - backend-db
 
   checker:
     build:
@@ -45,11 +45,40 @@ services:
       - "./backend/scripts:/scripts"
       - "./init/checker/init.sh:/init.sh"
     networks:
-      - backend-2
+      - backend-checker
+
+  web:
+    build:
+      context: ./frontend/
+    networks:
+      - frontend
+      - backend-api
+
+  nginx:
+    image: nginx:1.29.4
+    ports:
+      - "80:8080"
+    volumes:
+      - "./cfg/nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "${LOG_PATH:-/tmp}/nginx:/usr/local/nginx/logs"
+      - "${STORAGE_PATH:-/tmp}/checker:/checker"
+    depends_on:
+      - api
+      - web
+    networks:
+      - frontend
+      - backend-api
+
 
 networks:
-  backend-1:
+  backend-api:
     driver: bridge
 
-  backend-2:
+  backend-checker:
+    driver: bridge
+  
+  # backend-db:
+  #   driver: bridge
+
+  frontend:
     driver: bridge
