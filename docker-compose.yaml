@@ -19,7 +19,11 @@ services:
     environment:
       CHECKER_ADDR: "tcp://checker:55555"
     volumes:
-      - "${LOG_PATH:-/tmp}/api:/logs"
+      - "${LOG_PATH:-/tmp}/api/:/logs/"
+    ports:
+      - "8080:8080"
+    security_opt:
+      - seccomp=unconfined
     depends_on:
       - checker
       # - postgresql
@@ -35,8 +39,11 @@ services:
       CHECKER_ADDR: "tcp://checker:55555"
       LOG_PATH: "/logs/checker.log"
     volumes:
+      - "${STORAGE_PATH:-/tmp}/checker:/checker"
       - "${LOG_PATH:-/tmp}/checker:/logs"
-      - "${CHECKER_DATA:-/tmp}/checkerData:/home/checker"
+      - "${HOME}/.ssh:/home/checker/.ssh:ro"
+      - "./backend/scripts:/scripts"
+      - "./init/checker/init.sh:/init.sh"
     networks:
       - backend-2
 

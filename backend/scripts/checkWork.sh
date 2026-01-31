@@ -16,18 +16,14 @@ COPY_DOCS=true
 
 # init variables
 organizationName="mai_labs_2025_2026"
-backupDir="/home/$user/backups"
-worksDir="/home/$user/works"
-docsDir="/home/$user/docs"
+baseDir="/checker/data"
+if [ ! -d "$baseDir" ]; then
+	mkdir -p "$baseDir"
+fi
 
-# if (( "$#" < "3" )); then
-# 	echo "Usage: $0 <Lab work type> <Lab work number> <student GV name>"
-# 	exit 0
-# fi
-#
-# workType="$1"
-# workNumber="$2"
-# student="$3"
+backupDir="$baseDir/backups"
+worksDir="$baseDir/works"
+docsDir="$baseDir/docs"
 
 read workType
 read workNumber
@@ -39,17 +35,17 @@ logFile="${docsDir}/logs/$workName.log"
 # Status functions
 stepStart() {
 	if (( "$#" < 1 )); then echo "Usage: $0 <Step name>"; exit 1; fi
-	echo "[LOG] Step $1 started..."
+	echo "[LOG] Step {$1} started..."
 }
 
 stepPassed() {
 	if (( "$#" < 1 )); then echo "Usage: $0 <Step name>"; exit 1; fi
-	echo "[OK] $1"
+	echo "[OK] {$1}"
 }
 
 stepFailed() {
 	if (( "$#" < 2 )); then echo "Usage: $0 <Step name> <Error output>"; exit 1; fi
-	echo "[ERROR] $1 failed. See error output below:"
+	echo "[ERROR] {$1} failed. See error output below:"
 	echo "$2"
 	exit 1
 }
@@ -173,8 +169,8 @@ checkReportAndApplications() {
 	repoName=$(ls ./report | grep -E "^${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")
 	echo "$repoName"
 	if [[ -z "$repoName" ]]; then
-		echo "Report name not match required pattern like [${rusLRName}${workNumber}_ИвановИИ_125_12.pdf]"
-		echo "Or it not exist"
+		echo "Report name not match required pattern like [${rusLRName}${workNumber}_ИвановИИ_125_12.pdf] (regex like \"^${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$\")"
+		echo "Or it is not exist"
 		return 1
 	fi
 	applicationName=$(ls ./report | grep -E "^Приложение${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")

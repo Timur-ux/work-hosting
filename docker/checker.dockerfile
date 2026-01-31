@@ -15,6 +15,7 @@ RUN ldd /app/build-release/services/checker/checker | grep "=>" | awk '{print $3
 
 FROM ubuntu:24.04 AS checker
 
+RUN apt update && apt install -y build-essential sudo cmake git && apt clean all
 RUN if [ ! -z $(id 1000 | grep "no such" ) ]; then \
 		useradd -m -u 1000 checker;\
 	else \
@@ -27,8 +28,11 @@ COPY --from=builder --chown=checker:checker /app/build-release/services/checker/
 COPY --from=builder /app/service-deps.tar /tmp/
 RUN tar --overwrite -xf /tmp/service-deps.tar -C / && rm /tmp/service-deps.tar
 
+# copy scripts
+COPY ./backend/scripts /home/checker/scripts
+
 USER checker
 
-VOLUME [ "/home/checker", "/logs" ]
+VOLUME [ "/checker", "/scripts", "/logs", "/home/checker/.ssh"]
 
-ENTRYPOINT [ "/app/checker" ]
+ENTRYPOINT [ "/init.sh", "/app/checker" ]
