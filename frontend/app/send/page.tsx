@@ -1,14 +1,14 @@
 "use client";
 import React, { useState } from "react";
+import UserData from "../_components/UserData";
 
 const Send = () => {
-  const [type, setType] = useState<"LR" | "KP">("LR");
-  const [number, setNuber] = useState(0);
-  const [gvName, setGvName] = useState("");
-
   return (
     <div>
-
+      <UserData />
+      <div className="flex w-full justify-center">
+        <button className="bg-blue-500 rounded-xl p-3">Отправить работу</button>
+      </div>
     </div>
   );
 };

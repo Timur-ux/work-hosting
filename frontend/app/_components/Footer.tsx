@@ -1,7 +1,7 @@
 export default function Footer() {
-  const hrefClass = "bg-gray-500 rounded-xl p-1 mx-3";
+  const hrefClass = "bg-gray-500 rounded p-1 mx-3";
   return (
-    <div className="flex justify-between px-20">
+    <footer className="flex justify-between px-20">
       <div className="flex">
         Весь сервис описал Бучкин Тимур
         <div className="flex">
@@ -22,6 +22,6 @@ export default function Footer() {
           github
         </a>
       </div>
-    </div>
+    </footer>
   );
 }
