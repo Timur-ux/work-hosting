@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function Header() {
 	const buttonClass="rounded-xl bg-gray-500 p-3"
 	return (
@@ -6,15 +8,15 @@ export default function Header() {
 		Сайт предварительной проверки работ
 		</div>
 		<div className="flex justify-between px-10 py-5">
-		<a href="/list" className={buttonClass}>
+		<Link href="/list" className={buttonClass}>
 		Очередь проверки
-		</a>
-		<a href="/send" className={buttonClass}>
+		</Link>
+		<Link href="/send" className={buttonClass}>
 		Отослать работу
-		</a>
-		<a href="/check" className={buttonClass}>
+		</Link>
+		<Link href="/check" className={buttonClass}>
 		Посмотреть результат проверки
-		</a>
+		</Link>
 		</div>
 		</div>
 	)

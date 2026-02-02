@@ -7,15 +7,15 @@ export interface UserDataState {
   gvName: string;
 }
 
-const initialState: UserDataState = {
+export const initialUserDataState: UserDataState = {
   workType: "Unset",
   workNumber: -1,
-  gvName: "Unset",
+  gvName: "",
 };
 
 export const userDataSlice = createSlice({
   name: "UserData",
-  initialState,
+  initialState: initialUserDataState,
   reducers: {
     workType(state, action: PayloadAction<"LR" | "KP" | "Unset">) {
       state.workType = action.payload;
