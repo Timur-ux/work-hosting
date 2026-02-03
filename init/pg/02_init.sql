@@ -2,7 +2,7 @@
 CREATE TABLE students (
 	id						SERIAL PRIMARY KEY,
 	gv_name				VARCHAR(60) NOT NULL UNIQUE,
-	group					INTEGER NOT NULL,
+	group_number	INTEGER NOT NULL,
 	first_name		VARCHAR(30) NOT NULL,
 	last_name			VARCHAR(30) NOT NULL,
 	father_name		VARCHAR(30) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE students (
 	email					VARCHAR(128) NOT NULL,
 	password_hash VARCHAR(64) NOT NULL UNIQUE,
 	created_at		TIMESTAMP NOT NULL DEFAULT NOW(),
-	updated_at		TIMESTAMP NOT NULL
+	updated_at		TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE students_update_history (
@@ -71,7 +71,7 @@ CREATE TABLE checking_queue (
 CREATE TABLE messages (
 	id SERIAL PRIMARY KEY,
 	sender_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-	reciever INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	reciever_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
 	message TEXT NOT NULL
 );
 
@@ -117,4 +117,3 @@ CREATE TABLE notifications (
 	created_at TIMESTAMP DEFAULT NOW() NOT NULL,
 	checked_at TIMESTAMP DEFAULT NULL
 );
-

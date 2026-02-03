@@ -1,6 +1,6 @@
 components:
   schemas:
-    RegisterResponseBody:
+    RegisterRequestBody:
       type: object
       additionalProperties: false
       properties:
@@ -28,9 +28,18 @@ components:
         password:
           type: string
           minLength: 8
+      required:
+        - gv-name
+        - group
+        - first-name
+        - last-name
+        - father-name
+        - email
+        - password
 
 
-    RegisterRequestBody:
+
+    RegisterResponseBody:
       type: object
       additionalProperties: false
       properties:

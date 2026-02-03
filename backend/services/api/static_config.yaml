@@ -17,10 +17,38 @@ components_manager:
                     level: debug
                     overflow_behavior: discard
 
+        work-holder:
+
+        pg-database:
+          dbconnection#env: POSTGRES_DB_CONNECTION
+          blocking_task_processor: fs-task-processor
+          dns_resolver: async
+
+        auth-pg-cache:
+          pgcomponent: pg-database
+          update-interval: 10s
 
         send-work-handler:
             path: /send
             method: POST
             task_processor: main-task-processor
+            auth:
+              types:
+                - bearer
+              scopes:
+                - user
 
-        work-holder:
+        register-handler:
+          path: /register
+          method: POST
+          task_processor: main-task-processor
+
+        login-handler:
+          path: /login
+          method: POST
+          task_processor: main-task-processor
+
+        works-queue-handle:
+          path: /queue
+          method: GET
+          task_processor: main-task-processor

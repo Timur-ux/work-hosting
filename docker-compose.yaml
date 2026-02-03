@@ -1,16 +1,16 @@
 services:
-  # postgres:
-  #   image: postgres:latest
-  #   restart: always
-  #   environment:
-  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
-  #     POSTGRES_USER: "${POSTGRES_USER:-admin}"
-  #     POSTGRES_DB: "workHosting"
-  #   volumes:
-  #     - "./init/pg:/docker-entrypoint-initdb.d:ro"
-  #     - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
-  #   networks:
-  #     - backend-db
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
+      POSTGRES_USER: "${POSTGRES_USER:-admin}"
+      POSTGRES_DB: "workHosting"
+    volumes:
+      - "./init/pg:/docker-entrypoint-initdb.d:ro"
+      - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
+    networks:
+      - backend-db
 
   api:
     build:
@@ -18,6 +18,8 @@ services:
       dockerfile: ./docker/api.dockerfile
     environment:
       CHECKER_ADDR: "tcp://checker:55555"
+      TOKEN_TTL: "3600000" # 1 hour 
+      POSTGRES_DB_CONNECTION: "postgresql://${POSTGRES_USER:-admin}@postgres:5432/workHosting"
     volumes:
       - "${LOG_PATH:-/tmp}/api/:/logs/"
     security_opt:

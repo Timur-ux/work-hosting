@@ -1,6 +1,7 @@
 #include "handlers/sendWork.hpp"
 #include "components/workHolder.hpp"
 #include "schemas/check.hpp"
+#include "userver/http/content_type.hpp"
 #include "work.hpp"
 #include <userver/components/component_context.hpp>
 #include <userver/formats/json/serialize_container.hpp>
@@ -32,6 +33,7 @@ SendWorkHandler::Value
 SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
                                         const Value &request_json,
                                         RequestContext &context) const {
+	request.GetHttpResponse().SetContentType(userver::http::content_type::kApplicationJson);
   auto requestBody = request_json.As<check::WorkRequest>();
   Work work = impl::workMap(requestBody);
 
