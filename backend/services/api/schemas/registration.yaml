@@ -6,6 +6,7 @@ components:
       properties:
         gv-name:
           type: string
+          minLength: 3
         group:
           type: integer
           minimum: 1
@@ -27,7 +28,7 @@ components:
           maxLength: 128
         password:
           type: string
-          minLength: 8
+          minLength: 5
       required:
         - gv-name
         - group

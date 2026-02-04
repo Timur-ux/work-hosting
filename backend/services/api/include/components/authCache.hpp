@@ -17,7 +17,7 @@ struct UserDbInfo {
   userver::server::auth::UserAuthInfo::Ticket token;
   std::int64_t user_id;
   std::vector<std::string> scopes;
-  std::string gvName;
+  std::string username;
 	userver::storages::postgres::TimePointTz updated;
 };
 
@@ -27,7 +27,7 @@ struct AuthCachePolicy {
   using ValueType = UserDbInfo;
   static constexpr auto kKeyMember = &UserDbInfo::token;
   static constexpr const char *kQuery =
-      "SELECT token, user_id, scopes, gvName, updated FROM auth_schema.tokens";
+      "SELECT token, user_id, scopes, username, updated FROM auth_schema.tokens";
   static constexpr const char *kUpdatedField = "updated";
   using UpdatedFieldType = userver::storages::postgres::TimePointTz;
 

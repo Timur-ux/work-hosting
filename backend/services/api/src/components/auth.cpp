@@ -82,7 +82,7 @@ AuthCheckerBearer::CheckAuth(const server::http::HttpRequest &request,
     return AuthCheckResult{
         AuthCheckResult::Status::kForbidden, {}, "Token expired"};
 
-  context.SetData("gvName", dbInfo.gvName);
+  context.SetData("username", dbInfo.username);
   return {};
 }
 

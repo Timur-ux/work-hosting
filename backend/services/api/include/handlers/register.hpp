@@ -1,7 +1,5 @@
 #ifndef HANDLER_REGISTER_HPP_
 #define HANDLER_REGISTER_HPP_
-#include "userver/storages/postgres/component.hpp"
-#include "userver/storages/postgres/database_fwd.hpp"
 #include "userver/storages/postgres/postgres_fwd.hpp"
 #pragma once
 #include <userver/server/handlers/http_handler_json_base.hpp>
@@ -18,7 +16,7 @@ public:
 
   Value HandleRequestJsonThrow(const HttpRequest &request,
                                const Value &request_json,
-                               RequestContext &context) const;
+                               RequestContext &context) const override;
 
 private:
 	storages::postgres::ClusterPtr db_;

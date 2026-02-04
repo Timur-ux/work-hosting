@@ -1,0 +1,26 @@
+components:
+  schemas:
+    LoginRequestBody:
+      type: object
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 3
+      required:
+        - username
+        - password
+
+    LoginResponseBody:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          default: "success"
+        bearer-token:
+          type: string
+

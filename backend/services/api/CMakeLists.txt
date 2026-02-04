@@ -37,3 +37,18 @@ add_executable(api)
 target_sources(api PUBLIC main.cpp)
 target_link_libraries(api PRIVATE api_lib api_config)
 target_include_directories(api PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
+# tests
+# functional
+userver_testsuite_add(
+	SERVICE_TARGET api
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+	PYTHON_BINARY ${TESTSUITE_PYTHON_BINARY}
+	PYTEST_ARGS
+	--service-binary=${CMAKE_CURRENT_BINARY_DIR}/${serviceName}
+	--service-config=${CMAKE_CURRENT_SOURCE_DIR}/static_config.yaml
+	-rf
+	--service-source-dir=${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+

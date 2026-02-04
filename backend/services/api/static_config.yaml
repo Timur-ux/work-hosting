@@ -28,6 +28,8 @@ components_manager:
           pgcomponent: pg-database
           update-interval: 10s
 
+        testsuite-support:
+
         send-work-handler:
             path: /send
             method: POST
@@ -36,7 +38,7 @@ components_manager:
               types:
                 - bearer
               scopes:
-                - user
+                - student
 
         register-handler:
           path: /register
@@ -48,7 +50,11 @@ components_manager:
           method: POST
           task_processor: main-task-processor
 
-        works-queue-handle:
-          path: /queue
+        hello-handler:
+          path: /testing/hello
           method: GET
-          task_processor: main-task-processor
+          auth:
+            types:
+              - bearer
+            scopes:
+              - hello

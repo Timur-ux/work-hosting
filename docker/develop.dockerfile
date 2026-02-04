@@ -1,7 +1,7 @@
 FROM nvim-setup:latest AS develop
 
-COPY ./third_party/userver/scripts/docs/en/deps/ubuntu-24.04.md /userver_tmp/
-COPY ./third_party/userver/scripts/postgres/ubuntu-install-postgresql-includes.sh /userver_tmp/
+COPY ./backend/third_party/userver/scripts/docs/en/deps/ubuntu-24.04.md /userver_tmp/
+COPY ./backend/third_party/userver/scripts/postgres/ubuntu-install-postgresql-includes.sh /userver_tmp/
 
 RUN apt update \
   && apt install -y $(cat /userver_tmp/ubuntu-24.04.md) \

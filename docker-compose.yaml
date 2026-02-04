@@ -19,19 +19,26 @@ services:
     environment:
       CHECKER_ADDR: "tcp://checker:55555"
       TOKEN_TTL: "3600000" # 1 hour 
-      POSTGRES_DB_CONNECTION: "postgresql://${POSTGRES_USER:-admin}@postgres:5432/workHosting"
+      POSTGRES_DB_CONNECTION: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-qwerty}@postgres:5432/workHosting"
+      ADMIN_USERNAME: "${ADMIN_USERNAME}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
     volumes:
       - "${LOG_PATH:-/tmp}/api/:/logs/"
+      - "./backend/services/api/static_config.yaml:/static_config/static_config.yaml"
+    entrypoint:
+      - /app/api
+      - --config
+      - /static_config/static_config.yaml
     security_opt:
       - seccomp=unconfined
     depends_on:
       - checker
-      # - postgresql
+      - postgres
     networks:
       - frontend
       - backend-api
       - backend-checker
-      # - backend-db
+      - backend-db
 
   checker:
     build:
@@ -79,8 +86,8 @@ networks:
   backend-checker:
     driver: bridge
   
-  # backend-db:
-  #   driver: bridge
+  backend-db:
+    driver: bridge
 
   frontend:
     driver: bridge
