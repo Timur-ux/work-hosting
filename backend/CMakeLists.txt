@@ -21,7 +21,7 @@ add_subdirectory(third_party/cppzmq/)
 
 if(BUILD_api OR BUILD_ALL)
 	# setup userver
-	find_package(userver COMPONENTS core chaotic redis postgresql QUIET)
+	find_package(userver COMPONENTS core utest chaotic redis postgresql QUIET)
 	if(NOT userver_FOUND)
 		message(STATUS "Global userver installation not found. Trying to fetch local userver at ${CMAKE_CURRENT_SOURCE_DIR}/third_party/userver directory")
 		if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/userver")

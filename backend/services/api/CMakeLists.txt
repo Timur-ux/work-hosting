@@ -30,7 +30,7 @@ file(GLOB_RECURSE service_src LIST_DIRECTORIES FALSE ./src/*.cpp)
 
 add_library(api_lib STATIC ${service_src})
 target_include_directories(api_lib PUBLIC include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/include")
-target_link_libraries(api_lib PUBLIC userver::core userver::postgresql api_sql api-chgen ${CMAKE_PROJECT_NAME}_LIB cppzmq-static)
+target_link_libraries(api_lib PUBLIC userver::core userver::redis userver::postgresql api_sql api-chgen ${CMAKE_PROJECT_NAME}_LIB cppzmq-static)
 target_compile_definitions(api_lib PUBLIC SERVICE_NAMESPACE=${service_ns})
 
 add_executable(api)
@@ -42,13 +42,16 @@ target_include_directories(api PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 # functional
 userver_testsuite_add(
 	SERVICE_TARGET api
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/functional
 	PYTHON_BINARY ${TESTSUITE_PYTHON_BINARY}
 	PYTEST_ARGS
-	--service-binary=${CMAKE_CURRENT_BINARY_DIR}/${serviceName}
+	--service-binary=${CMAKE_CURRENT_BINARY_DIR}/api
 	--service-config=${CMAKE_CURRENT_SOURCE_DIR}/static_config.yaml
 	-rf
 	--service-source-dir=${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
+# unit
+file(GLOB_RECURSE unittest_src LIST_DIRECTORIES FALSE ./tests/unit/*.cpp)
+add_executable(unittest-api ${unittest_src})
+target_link_libraries(unittest-api PUBLIC userver::utest userver::redis)

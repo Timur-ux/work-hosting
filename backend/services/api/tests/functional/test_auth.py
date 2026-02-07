@@ -1,6 +1,6 @@
 import pytest
 
-@pytest.mark.pgsql('auth', files=['test_data.sql'])
+@pytest.mark.pgsql('workHosting', files=['test_auth.sql'])
 async def test_auth(service_client):
     response = await service_client.get("/testing/hello")
     assert response.status == 401

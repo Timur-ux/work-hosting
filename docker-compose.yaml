@@ -1,14 +1,20 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:18
     restart: always
     environment:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
       POSTGRES_USER: "${POSTGRES_USER:-admin}"
-      POSTGRES_DB: "workHosting"
+      POSTGRES_DB: "${POSTGRES_DB:-workHosting}"
     volumes:
       - "./init/pg:/docker-entrypoint-initdb.d:ro"
       - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
+    networks:
+      - backend-db
+
+  redis:
+    image: redis:8.4.0
+    restart: always
     networks:
       - backend-db
 
@@ -25,6 +31,7 @@ services:
     volumes:
       - "${LOG_PATH:-/tmp}/api/:/logs/"
       - "./backend/services/api/static_config.yaml:/static_config/static_config.yaml"
+      - "./cfg/secure_data.json:/etc/api/secure_data.json"
     entrypoint:
       - /app/api
       - --config
@@ -34,6 +41,7 @@ services:
     depends_on:
       - checker
       - postgres
+      - redis
     networks:
       - frontend
       - backend-api

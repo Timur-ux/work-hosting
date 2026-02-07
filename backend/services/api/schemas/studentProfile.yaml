@@ -1,6 +1,6 @@
 components:
   schemas:
-    RegisterRequestBody:
+    GetStudentProfileResponseBody:
       type: object
       additionalProperties: false
       properties:
@@ -23,25 +23,7 @@ components:
           type: string
           minLength: 1
           maxLength: 128
-        password:
-          type: string
-          minLength: 5
-      required:
-        - gv-name
-        - first-name
-        - last-name
-        - father-name
-        - email
-        - password
-
-
-
-    RegisterResponseBody:
-      type: object
-      additionalProperties: false
-      properties:
-        status:
-          type: string
-          default: "success"
-        message:
-          type: string
+        group-number:
+          type: integer
+        in-group-order:
+          type: integer

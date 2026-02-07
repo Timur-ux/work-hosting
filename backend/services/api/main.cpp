@@ -1,4 +1,3 @@
-#include "components/authCache.hpp"
 #include "components/authFactory.hpp"
 #include "components/workHolder.hpp"
 #include "generated/static_config.yaml.hpp"
@@ -6,9 +5,13 @@
 #include "handlers/login.hpp"
 #include "handlers/register.hpp"
 #include "handlers/sendWork.hpp"
+#include "handlers/student_profile.hpp"
 #include "userver/clients/dns/component.hpp"
 #include "userver/server/handlers/auth/auth_checker_factory.hpp"
 #include "userver/storages/postgres/component.hpp"
+#include "userver/storages/secdist/component.hpp"
+#include "userver/storages/secdist/provider_component.hpp"
+#include "userver/storages/redis/component.hpp"
 #include <fmt/core.h>
 #include <userver/components/component_list.hpp>
 #include <userver/components/minimal_server_component_list.hpp>
@@ -22,13 +25,16 @@ using namespace SERVICE_NAMESPACE;
 int main(int argc, const char *argw[]) {
   server::handlers::auth::RegisterAuthCheckerFactory<AuthCheckerFactory>();
   auto componentsList = components::MinimalServerComponentList()
-                            .Append<AuthCache>()
+														.Append<components::Secdist>()
+														.Append<components::DefaultSecdistProvider>()
+														.Append<components::Redis>("redis-cache")
                             .Append<components::Postgres>("pg-database")
                             .Append<WorkHolder>()
                             .Append<SendWorkHandler>()
 														.Append<RegisterHandler>()
 														.Append<LoginHandler>()
 														.Append<HelloHandler>()
+														.Append<StudentProfileHandler>()
 														.Append<components::TestsuiteSupport>()
                             .Append<clients::dns::Component>();
   bool useInMemoryConfig = true;

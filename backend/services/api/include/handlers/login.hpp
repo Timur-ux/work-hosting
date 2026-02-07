@@ -4,6 +4,8 @@
 #include "userver/components/component_context.hpp"
 #include "userver/concurrent/background_task_storage.hpp"
 #include "userver/storages/postgres/postgres_fwd.hpp"
+#include "userver/storages/redis/client_fwd.hpp"
+#include "userver/storages/redis/command_control.hpp"
 #pragma once
 
 #include <userver/server/handlers/http_handler_json_base.hpp>
@@ -24,11 +26,11 @@ public:
   Value HandleRequestJsonThrow(const HttpRequest &request,
                                const Value &request_json,
                                RequestContext &context) const override;
-	~LoginHandler();
 private:
 	storages::postgres::ClusterPtr db_;
-
-	concurrent::BackgroundTaskStorage bts_;
+	storages::redis::ClientPtr redis_;
+	storages::redis::CommandControl redisCC_;
+  long tokenTTL_ms_ = 3600000; // 1 hour by default
 };
 } // namespace SERVICE_NAMESPACE
 

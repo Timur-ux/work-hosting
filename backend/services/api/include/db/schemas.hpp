@@ -8,6 +8,14 @@
 #include <vector>
 #pragma once
 namespace SERVICE_NAMESPACE {
+struct UserBase {
+	std::int64_t id;
+	std::string first_name;
+	std::string last_name;
+	std::int32_t group_number;
+	std::int32_t in_group_order;
+};
+
 struct User {
   std::int64_t id;
   std::string username;
@@ -20,6 +28,8 @@ struct Student {
   std::int64_t id;
   std::int64_t user_id;
   std::string gv_name;
+	std::int32_t group_number;
+	std::int32_t in_group_order;
   std::string first_name;
   std::string last_name;
   std::string father_name;

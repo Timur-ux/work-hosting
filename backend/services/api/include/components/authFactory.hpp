@@ -1,8 +1,9 @@
 #ifndef AUTH_FACTORY_HPP_
 #define AUTH_FACTORY_HPP_
-#include "components/authCache.hpp"
 #include "userver/components/component_context.hpp"
 #include "userver/server/handlers/auth/auth_checker_factory.hpp"
+#include "userver/storages/redis/client_fwd.hpp"
+#include "userver/storages/redis/command_control.hpp"
 #include <string_view>
 #pragma once
 namespace SERVICE_NAMESPACE {
@@ -17,7 +18,8 @@ public:
   server::handlers::auth::AuthCheckerBasePtr MakeAuthChecker(
       const server::handlers::auth::HandlerAuthConfig &) const override;
 private:
-	AuthCache &authCache_;
+	storages::redis::ClientPtr redis_;
+	storages::redis::CommandControl redisCC_;
 };
 } // namespace SERVICE_NAMESPACE
 #endif // !AUTH_FACTORY_HPP_

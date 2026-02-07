@@ -7,12 +7,10 @@
 #include "userver/http/content_type.hpp"
 #include "userver/logging/log.hpp"
 #include "userver/server/handlers/exceptions.hpp"
-#include "userver/server/handlers/fallback_handlers.hpp"
 #include "userver/server/http/http_status.hpp"
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
 #include "userver/storages/postgres/component.hpp"
-#include "userver/storages/postgres/io/bytea.hpp"
 #include "userver/storages/postgres/io/row_types.hpp"
 #include "utils.hpp"
 #include "work_hosting/sql_queries.hpp"
@@ -43,9 +41,8 @@ RegisterHandler::RegisterHandler(
       "check-admin", storages::postgres::ClusterHostType::kMaster, {});
   auto res = transaction.Execute(sql::kFindUser, adminUsername);
   if (res.Size() == 0) {
-		using storages::postgres::Bytea; 
     LOG_INFO() << "Admin user not found so i insert new";
-    res = transaction.Execute(sql::kInsertUser, adminUsername, Bytea(passwordHash),
+    res = transaction.Execute(sql::kInsertUser, adminUsername, passwordHash,
                               UserRole::kAdmin);
     if (res.RowsAffected()) {
       transaction.Commit();
@@ -66,12 +63,13 @@ RegisterHandler::RegisterHandler(
   res = transaction.Execute(sql::kUpdateAdmin, passwordHash, user.id);
   if (res.RowsAffected()) {
     transaction.Commit();
-    LOG_INFO() << "Admin with username: " << adminUsername << " and id: " << user.id
+    LOG_INFO() << "Admin with username: " << adminUsername
+               << " and id: " << user.id
                << " successfully updated to new password";
     return;
   }
-  LOG_ERROR() << "Admin with username: " << adminUsername << " and id: " << user.id
-              << " can't be updated to new password!";
+  LOG_ERROR() << "Admin with username: " << adminUsername
+              << " and id: " << user.id << " can't be updated to new password!";
   return;
 }
 
@@ -89,24 +87,33 @@ RegisterHandler::HandleRequestJsonThrow(const HttpRequest &request,
   if (res.AsSingleRow<bool>())
     throw server::handlers::ConflictError(
         ExternalBody{"Student with given git verse name already exists"});
+
   std::string passwordHash = utils::hash(body.password);
-	using storages::postgres::Bytea;
-  res = transaction.Execute(sql::kInsertUser, body.gv_name, Bytea(passwordHash),
+
+  res = transaction.Execute(sql::kInsertUser, body.gv_name, passwordHash,
                             UserRole::kStudent);
-  if (!res.RowsAffected()) {
-    LOG_WARNING() << "Unable insert user with username:" << body.gv_name;
-    throw server::handlers::InternalServerError(
-        ExternalBody{"Unable insert user to db"});
-  }
+  if (!res.RowsAffected())
+    throw server::handlers::InternalServerError(ExternalBody{fmt::format(
+        "Unable insert user to db. Can't insert user with username [{}] to db",
+        body.gv_name)});
+
+  res = transaction.Execute(sql::kFindStudentBase, body.first_name,
+                            body.last_name);
+
+  if (res.Size() == 0)
+    throw server::handlers::ResourceNotFound(
+        ExternalBody{fmt::format("Student with first name: [{}] and last name "
+                                 "[{}] not found in student db",
+                                 body.first_name, body.last_name)});
+
+  auto userBase = res.AsSingleRow<UserBase>(storages::postgres::kRowTag);
+
   res = transaction.Execute(sql::kFindUser, body.gv_name);
 
-  if (res.Size() != 1) {
-    LOG_WARNING() << "After inserting user with username: " << body.gv_name
-                  << " found: " << res.Size()
-                  << " users with such username, expected 1";
-    throw server::handlers::InternalServerError(
-        ExternalBody{"Unable find proper user in db"});
-  }
+  if (res.Size() != 1)
+    throw server::handlers::InternalServerError(ExternalBody{fmt::format(
+        "Unable find proper user in db. Expected to find 1, but found {}",
+        res.Size())});
 
   auto user = res.AsSingleRow<User>(storages::postgres::kRowTag);
 
@@ -114,8 +121,9 @@ RegisterHandler::HandleRequestJsonThrow(const HttpRequest &request,
       fmt::format("{}{}", body.first_name[0], body.father_name[0]);
 
   res = transaction.Execute(sql::kInsertStudent, user.id, body.gv_name,
-                            body.group, body.first_name, body.last_name,
-                            body.father_name, initials, body.email);
+                            userBase.group_number, userBase.in_group_order,
+                            body.first_name, body.last_name, body.father_name,
+                            initials, body.email);
   if (res.RowsAffected()) {
     transaction.Commit();
     request.SetResponseStatus(server::http::HttpStatus::kCreated);
@@ -130,5 +138,4 @@ RegisterHandler::HandleRequestJsonThrow(const HttpRequest &request,
   throw server::handlers::InternalServerError{
       ExternalBody{"User can't be inserted to db -\\_(-_-)/-"}};
 }
-
 } // namespace SERVICE_NAMESPACE

@@ -13,6 +13,15 @@ RUN apt update \
   && apt clean all \
   && /userver_tmp/ubuntu-install-postgresql-includes.sh
 
+RUN \
+  # Set UTC timezone \
+  TZ=Etc/UTC; \
+  ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+   \
+  # Generate locales \
+  && locale-gen en_US.UTF-8 \
+  && update-locale LC_ALL="en_US.UTF-8" LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8"
+
 USER 1000
 
 

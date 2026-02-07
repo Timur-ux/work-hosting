@@ -3,17 +3,26 @@ CREATE TYPE ROLE AS ENUM('student', 'admin');
 CREATE TABLE users (
 	id						SERIAL PRIMARY KEY,
 	username			VARCHAR(60) NOT NULL UNIQUE,
-	password_hash BYTEA NOT NULL UNIQUE,
+	password_hash VARCHAR(128) NOT NULL,
 	role					ROLE NOT NULL,
 	created_at		TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- STUDENTS --
+CREATE TABLE student_bases (
+	id SERIAL PRIMARY KEY,
+	first_name		VARCHAR(30) NOT NULL,
+	last_name			VARCHAR(30) NOT NULL,
+	group_number	INTEGER NOT NULL,
+	in_group_order INTEGER NOT NULL
+);
+
 CREATE TABLE students (
 	id						SERIAL PRIMARY KEY,
 	user_id				INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 	gv_name				VARCHAR(60) NOT NULL UNIQUE,
 	group_number	INTEGER NOT NULL,
+	in_group_order INTEGER NOT NULL,
 	first_name		VARCHAR(30) NOT NULL,
 	last_name			VARCHAR(30) NOT NULL,
 	father_name		VARCHAR(30) NOT NULL,

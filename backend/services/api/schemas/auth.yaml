@@ -1,0 +1,21 @@
+components:
+  schemas:
+    AuthCacheEntry:
+      type: object
+      additionalProperties: false
+      properties:
+        user_id:
+          type: integer
+          x-usrv-cpp-type: std::int64_t
+        username:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+      required:
+        - user_id
+        - username
+        - scopes
+
+

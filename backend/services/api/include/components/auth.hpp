@@ -1,9 +1,9 @@
 #ifndef AUTH_COMPONENT_HPP_
 #define AUTH_COMPONENT_HPP_
-#include "components/authCache.hpp"
 #include "userver/server/auth/user_scopes.hpp"
 #include "userver/server/handlers/auth/auth_checker_base.hpp"
-#include "userver/storages/postgres/component.hpp"
+#include "userver/storages/redis/client_fwd.hpp"
+#include "userver/storages/redis/command_control.hpp"
 #include <vector>
 #pragma once
 namespace SERVICE_NAMESPACE {
@@ -12,7 +12,8 @@ class AuthCheckerBearer final : public server::handlers::auth::AuthCheckerBase {
 public:
   using AuthCheckResult = server::handlers::auth::AuthCheckResult;
 
-  AuthCheckerBearer(const AuthCache &authCache,
+  AuthCheckerBearer(storages::redis::ClientPtr redis,
+                    storages::redis::CommandControl redisCC,
                     std::vector<server::auth::UserScope> requiredScopes);
 
   [[nodiscard]] AuthCheckResult
@@ -22,8 +23,8 @@ public:
   [[nodiscard]] bool SupportsUserAuth() const noexcept override;
 
 private:
-	long tokenTTL_ms_ = 3600000; // 1 hour by default
-  const AuthCache &authCache_;
+	storages::redis::ClientPtr redis_;
+	storages::redis::CommandControl redisCC_;
   const std::vector<server::auth::UserScope> requiredScopes_;
 };
 } // namespace SERVICE_NAMESPACE

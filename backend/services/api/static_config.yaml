@@ -1,60 +1,82 @@
 components_manager:
-    task_processors:
-        main-task-processor:
-            worker_threads: 4
+  task_processors:
+    main-task-processor:
+      worker_threads: 4
 
-        fs-task-processor:
-            worker_threads: 1
+    fs-task-processor:
+      worker_threads: 1
 
-    components:
-        server:
-            listener:
-                port: 8080
-        logging:
-            loggers:
-                default:
-                    file_path: '/logs/api.log'
-                    level: debug
-                    overflow_behavior: discard
+  components:
+    server:
+      listener:
+        port: 8080
+    logging:
+      loggers:
+        default:
+          file_path: '/logs/api.log'
+          level: debug
+          overflow_behavior: discard
 
-        work-holder:
+    work-holder:
 
-        pg-database:
-          dbconnection#env: POSTGRES_DB_CONNECTION
-          blocking_task_processor: fs-task-processor
-          dns_resolver: async
+    pg-database:
+      dbconnection#env: POSTGRES_DB_CONNECTION
+      blocking_task_processor: fs-task-processor
+      dns_resolver: async
 
-        auth-pg-cache:
-          pgcomponent: pg-database
-          update-interval: 10s
+    redis-cache:
+      groups:
+        - config_name: cache
+          db: api_cache_db
+          sharding_strategy: RedisCluster
+      subscribe_groups:
+        - config_name: cache
+          db: api_cache_db
+          sharding_strategy: RedisCluster
+      thread_pools:
+        redis_thread_pool_size: 4
+        sentinel_thread_pool_size: 1
 
-        testsuite-support:
+    testsuite-support:
 
-        send-work-handler:
-            path: /send
-            method: POST
-            task_processor: main-task-processor
-            auth:
-              types:
-                - bearer
-              scopes:
-                - student
+    default-secdist-provider:
+      config: /etc/api/secure_data.json
 
-        register-handler:
-          path: /register
-          method: POST
-          task_processor: main-task-processor
+    send-work-handler:
+      path: /send
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - bearer
+        scopes:
+          - student
 
-        login-handler:
-          path: /login
-          method: POST
-          task_processor: main-task-processor
+    register-handler:
+      path: /register
+      method: POST
+      task_processor: main-task-processor
 
-        hello-handler:
-          path: /testing/hello
-          method: GET
-          auth:
-            types:
-              - bearer
-            scopes:
-              - hello
+    login-handler:
+      path: /login
+      method: POST
+      task_processor: main-task-processor
+
+    student-profile-handler:
+      path: /student/profile
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - bearer
+        scopes:
+          - student
+
+    hello-handler:
+      path: /testing/hello
+      method: GET
+      auth:
+        types:
+          - bearer
+        scopes:
+          - hello
