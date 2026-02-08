@@ -30,7 +30,7 @@ file(GLOB_RECURSE service_src LIST_DIRECTORIES FALSE ./src/*.cpp)
 
 add_library(api_lib STATIC ${service_src})
 target_include_directories(api_lib PUBLIC include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/include")
-target_link_libraries(api_lib PUBLIC userver::core userver::redis userver::postgresql api_sql api-chgen ${CMAKE_PROJECT_NAME}_LIB cppzmq-static)
+target_link_libraries(api_lib PUBLIC userver::core userver::redis userver::postgresql api_sql api-chgen ${CMAKE_PROJECT_NAME}_LIB cppzmq)
 target_compile_definitions(api_lib PUBLIC SERVICE_NAMESPACE=${service_ns})
 
 add_executable(api)
@@ -55,3 +55,4 @@ userver_testsuite_add(
 file(GLOB_RECURSE unittest_src LIST_DIRECTORIES FALSE ./tests/unit/*.cpp)
 add_executable(unittest-api ${unittest_src})
 target_link_libraries(unittest-api PUBLIC userver::utest userver::redis)
+add_test(NAME unittest-api COMMAND unittest-api)

@@ -1,12 +1,12 @@
 services:
-  postgres:
+  postgres: &postgres
     image: postgres:18
     restart: always
-    environment:
+    environment: &postgres-env
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
       POSTGRES_USER: "${POSTGRES_USER:-admin}"
       POSTGRES_DB: "${POSTGRES_DB:-workHosting}"
-    volumes:
+    volumes: &postgres-volumes
       - "./init/pg:/docker-entrypoint-initdb.d:ro"
       - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
     networks:
@@ -18,17 +18,17 @@ services:
     networks:
       - backend-db
 
-  api:
+  api: 
     build:
       context: .
       dockerfile: ./docker/api.dockerfile
-    environment:
+    environment: &api-env
       CHECKER_ADDR: "tcp://checker:55555"
       TOKEN_TTL: "3600000" # 1 hour 
       POSTGRES_DB_CONNECTION: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-qwerty}@postgres:5432/workHosting"
       ADMIN_USERNAME: "${ADMIN_USERNAME}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
-    volumes:
+    volumes: &api-volumes
       - "${LOG_PATH:-/tmp}/api/:/logs/"
       - "./backend/services/api/static_config.yaml:/static_config/static_config.yaml"
       - "./cfg/secure_data.json:/etc/api/secure_data.json"
@@ -36,13 +36,13 @@ services:
       - /app/api
       - --config
       - /static_config/static_config.yaml
-    security_opt:
+    security_opt: &api-security
       - seccomp=unconfined
-    depends_on:
+    depends_on: &api-depends
       - checker
       - postgres
       - redis
-    networks:
+    networks: &api-networks
       - frontend
       - backend-api
       - backend-checker
@@ -86,8 +86,41 @@ services:
       - frontend
       - backend-api
 
+  redis-test:
+    hostname: redis
+    domainname: redis
+    image: redis:8.4.0
+    restart: always
+    ports:
+      - "26379:6379"
+    networks: 
+      - tests
+
+  postgres-test: 
+    hostname: postgres
+    image: postgres:18
+    restart: always
+    environment: *postgres-env
+    volumes: *postgres-volumes
+    networks: 
+      - tests
+
+  api-test:
+    build:
+      context: .
+      dockerfile: ./docker/api-test.dockerfile
+    environment: *api-env
+    volumes: *api-volumes
+    security_opt: *api-security
+    depends_on: 
+      - postgres-test
+      - redis-test
+    networks: 
+      - tests
 
 networks:
+  tests:
+    driver: bridge
   backend-api:
     driver: bridge
 

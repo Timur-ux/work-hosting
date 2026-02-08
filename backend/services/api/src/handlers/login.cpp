@@ -6,12 +6,17 @@
 #include "userver/http/content_type.hpp"
 #include "userver/logging/log.hpp"
 #include "userver/server/handlers/exceptions.hpp"
+#include "userver/server/handlers/http_handler_json_base.hpp"
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
 #include "userver/storages/postgres/component.hpp"
+#include "userver/storages/postgres/exceptions.hpp"
+#include "userver/storages/postgres/options.hpp"
 #include "userver/storages/postgres/postgres_fwd.hpp"
+#include "userver/storages/postgres/transaction.hpp"
 #include "userver/storages/redis/client.hpp"
 #include "userver/storages/redis/component.hpp"
+#include "userver/yaml_config/merge_schemas.hpp"
 #include "utils.hpp"
 #include "work_hosting/sql_queries.hpp"
 #include <chrono>
@@ -25,21 +30,8 @@ LoginHandler::LoginHandler(const components::ComponentConfig &config,
       db_(context.FindComponent<components::Postgres>("pg-database")
               .GetCluster()),
       redis_(context.FindComponent<components::Redis>("redis-cache")
-                 .GetClient("api_auth_db")) {
-  const char *tokenTTLenv = getenv("TOKEN_TTL");
-  if (!tokenTTLenv) {
-    LOG_INFO() << "TOKEN_TTL env not specified, so i use default value: "
-               << tokenTTL_ms_ << "ms";
-    return;
-  }
-  long long tokenTTL = -1;
-  try {
-    tokenTTL = std::stoll(tokenTTLenv);
-  } catch (std::exception &e) {
-    LOG_WARNING() << "Error while parsing TOKEN_TTL value: " << e.what()
-                  << "\nSo i use default value: " << tokenTTL_ms_ << "ms";
-    return;
-  }
+                 .GetClient("api_cache_db")) {
+  long tokenTTL = config["token-ttl"].As<long>();
   if (tokenTTL <= 0) {
     LOG_WARNING() << "Given TOKEN_TTL is not positive: " << tokenTTL
                   << "\nIt must be positive, so i use default value: "
@@ -50,16 +42,33 @@ LoginHandler::LoginHandler(const components::ComponentConfig &config,
   LOG_INFO() << "Using token ttl: " << tokenTTL_ms_ << "ms";
 }
 
+yaml_config::Schema LoginHandler::GetStaticConfigSchema() {
+	return yaml_config::MergeSchemas<HttpHandlerJsonBase>(R"(
+type: object
+additionalProperties: false
+description: provide auto token ttl
+properties:
+  token-ttl:
+    type: integer
+    description: auth token time to live in milliseconds
+)");
+}
+
 LoginHandler::Value
 LoginHandler::HandleRequestJsonThrow(const HttpRequest &request,
                                      const Value &request_json,
                                      RequestContext &context) const {
+	LOG_DEBUG() << "HANDLE STARTED";
   request.GetHttpResponse().SetContentType(
       http::content_type::kApplicationJson);
   auto body = request_json.As<login::LoginRequestBody>();
 
+	LOG_DEBUG() << "HANDLE REQUEST BODY PARSED";
+	using storages::postgres::TransactionOptions;
+	TransactionOptions opts{TransactionOptions::kReadOnly};
   auto transaction =
-      db_->Begin("login", storages::postgres::ClusterHostType::kSlave, {});
+      db_->Begin("login", storages::postgres::ClusterHostType::kSlave, opts);
+
   auto res = transaction.Execute(sql::kFindUser, body.username);
   if (res.Size() == 0)
     throw server::handlers::ResourceNotFound(
@@ -80,13 +89,21 @@ LoginHandler::HandleRequestJsonThrow(const HttpRequest &request,
           RoleBimap::enumerators.TryFindBySecond(user.role)->data()},
   };
 
-	auto cacheEntryValue = formats::json::ValueBuilder{cacheEntry}.ExtractValue();
+  auto cacheEntryValue = formats::json::ValueBuilder{cacheEntry}.ExtractValue();
 
-	using std::chrono::milliseconds;
-	redis_->Set(token, formats::json::ToString(cacheEntryValue), milliseconds(tokenTTL_ms_), redisCC_).Get();
-	return formats::json::ValueBuilder{
-			login::LoginResponseBody{"success", token}}
-			.ExtractValue();
+  using std::chrono::milliseconds;
+	try{
+		redis_
+				->Set(token, formats::json::ToString(cacheEntryValue),
+							milliseconds(tokenTTL_ms_), redisCC_)
+				.Get();
+	} catch(std::exception &e) {
+		LOG_ERROR() << "Set auth token to redis failed: " << e.what();
+	}
+  return formats::json::ValueBuilder{login::LoginResponseBody{"success", token}}
+      .ExtractValue();
+  return formats::json::ValueBuilder{login::LoginResponseBody{"success", "some"}}
+      .ExtractValue();
 }
 
 } // namespace SERVICE_NAMESPACE

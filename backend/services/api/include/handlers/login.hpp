@@ -6,6 +6,7 @@
 #include "userver/storages/postgres/postgres_fwd.hpp"
 #include "userver/storages/redis/client_fwd.hpp"
 #include "userver/storages/redis/command_control.hpp"
+#include "userver/yaml_config/schema.hpp"
 #pragma once
 
 #include <userver/server/handlers/http_handler_json_base.hpp>
@@ -26,6 +27,7 @@ public:
   Value HandleRequestJsonThrow(const HttpRequest &request,
                                const Value &request_json,
                                RequestContext &context) const override;
+	static yaml_config::Schema GetStaticConfigSchema();
 private:
 	storages::postgres::ClusterPtr db_;
 	storages::redis::ClientPtr redis_;

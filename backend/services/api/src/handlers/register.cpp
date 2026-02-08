@@ -7,11 +7,13 @@
 #include "userver/http/content_type.hpp"
 #include "userver/logging/log.hpp"
 #include "userver/server/handlers/exceptions.hpp"
+#include "userver/server/handlers/http_handler_json_base.hpp"
 #include "userver/server/http/http_status.hpp"
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
 #include "userver/storages/postgres/component.hpp"
 #include "userver/storages/postgres/io/row_types.hpp"
+#include "userver/yaml_config/merge_schemas.hpp"
 #include "utils.hpp"
 #include "work_hosting/sql_queries.hpp"
 #include <cryptopp/sha.h>
@@ -20,6 +22,7 @@
 #include <fmt/core.h>
 #include <stdexcept>
 #include <userver/formats/serialize/common_containers.hpp>
+#include "userver/components/component_config.hpp"
 
 namespace SERVICE_NAMESPACE {
 RegisterHandler::RegisterHandler(
@@ -28,12 +31,8 @@ RegisterHandler::RegisterHandler(
     : HttpHandlerJsonBase(config, component_context),
       db_(component_context.FindComponent<components::Postgres>("pg-database")
               .GetCluster()) {
-  const char *adminUsername = std::getenv("ADMIN_USERNAME");
-  if (!adminUsername)
-    throw std::runtime_error("ADMIN_USERNAME env not specified!");
-  const char *adminPassword = std::getenv("ADMIN_PASSWORD");
-  if (!adminPassword)
-    throw std::runtime_error("ADMIN_PASSWORD env not specified!");
+  std::string adminUsername = config["admin-username"].As<std::string>();
+  std::string adminPassword = config["admin-password"].As<std::string>();
 
   std::string passwordHash = utils::hash(adminPassword);
 
@@ -71,6 +70,20 @@ RegisterHandler::RegisterHandler(
   LOG_ERROR() << "Admin with username: " << adminUsername
               << " and id: " << user.id << " can't be updated to new password!";
   return;
+}
+yaml_config::Schema RegisterHandler::GetStaticConfigSchema() {
+  return yaml_config::MergeSchemas<server::handlers::HttpHandlerJsonBase>(R"(
+type: object
+description: register new users and admin user
+additionalProperties: false
+properties:
+  admin-username:
+    type: string
+    description: admin username
+  admin-password:
+    type: string
+    description: admin password
+)");
 }
 
 RegisterHandler::Value

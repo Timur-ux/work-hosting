@@ -7,6 +7,7 @@
 #include <userver/engine/task/task_processor_fwd.hpp>
 #include <userver/engine/task/task_with_result.hpp>
 
+#include "userver/yaml_config/schema.hpp"
 #include "zmq.hpp"
 
 #include "work.hpp"
@@ -14,16 +15,10 @@
 namespace SERVICE_NAMESPACE {
 class WorkHolder : public userver::components::ComponentBase {
 public:
-	enum class TaskResult {
-		kSucceed,
-		kFailed,
-		kRunning,
-		kUndefined
-	};
   static constexpr std::string_view kName = "work-holder";
 
 	WorkHolder(const userver::components::ComponentConfig & config, const userver::components::ComponentContext & context);
-	using ComponentBase::GetStaticConfigSchema;
+	static userver::yaml_config::Schema GetStaticConfigSchema();
 
 	void addTask(const Work & work);
 private:

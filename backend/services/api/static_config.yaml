@@ -18,9 +18,12 @@ components_manager:
           overflow_behavior: discard
 
     work-holder:
+      checker-addr#env: CHECKER_ADDR
+      checker-addr#fallback: tcp://checker:55555
 
     pg-database:
       dbconnection#env: POSTGRES_DB_CONNECTION
+      dbconnection#fallback: postgresql://-admin:qwerty@postgres:5432/workHosting
       blocking_task_processor: fs-task-processor
       dns_resolver: async
 
@@ -28,11 +31,11 @@ components_manager:
       groups:
         - config_name: cache
           db: api_cache_db
-          sharding_strategy: RedisCluster
+          sharding_strategy: RedisStandalone
       subscribe_groups:
         - config_name: cache
           db: api_cache_db
-          sharding_strategy: RedisCluster
+          sharding_strategy: RedisStandalone
       thread_pools:
         redis_thread_pool_size: 4
         sentinel_thread_pool_size: 1
@@ -56,11 +59,17 @@ components_manager:
       path: /register
       method: POST
       task_processor: main-task-processor
+      admin-username#env: ADMIN_USERNAME
+      admin-username#fallback: admin
+      admin-password#env: ADMIN_PASSWORD
+      admin-password#fallback: qwerty
 
     login-handler:
       path: /login
       method: POST
       task_processor: main-task-processor
+      token-ttl#env: TOKEN_TTL
+      token-ttl#fallback: 360000
 
     student-profile-handler:
       path: /student/profile

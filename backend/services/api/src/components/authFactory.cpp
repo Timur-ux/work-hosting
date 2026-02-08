@@ -10,7 +10,7 @@ namespace SERVICE_NAMESPACE {
 AuthCheckerFactory::AuthCheckerFactory(
     const components::ComponentContext &context)
     : redis_(context.FindComponent<components::Redis>("redis-cache")
-                 .GetClient("api_auth_db")) {}
+                 .GetClient("api_cache_db")) {}
 
 server::handlers::auth::AuthCheckerBasePtr AuthCheckerFactory::MakeAuthChecker(
     const server::handlers::auth::HandlerAuthConfig &authConfig) const {

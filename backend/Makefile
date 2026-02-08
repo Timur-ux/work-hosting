@@ -31,6 +31,8 @@ release-target-%: cmake-release-target-%
 debug-target-%: cmake-debug
 	cmake --build build-debug --target $* -- -j$(NPROC)
 
+trdparty-only: build-release
+	cmake -S . -B $< ${CMAKE_RELEASE_FLAGS} -DBUILD_ALL=ON -DTRDPARTY_ONLY=ON
 
 .PHONY: clean
 clean:
