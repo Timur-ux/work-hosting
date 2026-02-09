@@ -1,5 +1,6 @@
 #ifndef AUTH_COMPONENT_HPP_
 #define AUTH_COMPONENT_HPP_
+#include "schemas/auth.hpp"
 #include "userver/server/auth/user_scopes.hpp"
 #include "userver/server/handlers/auth/auth_checker_base.hpp"
 #include "userver/storages/redis/client_fwd.hpp"
@@ -21,6 +22,12 @@ public:
             server::request::RequestContext &context) const override;
 
   [[nodiscard]] bool SupportsUserAuth() const noexcept override;
+	
+	// Get auth data from cache db by bearer token
+	// @throws AuthCheckResult if token processing failed
+	// @return AuthCacheEntry with cached user data
+	static auth::AuthCacheEntry GetAuthByToken(std::string authorizationHeader, storages::redis::ClientPtr redis, storages::redis::CommandControl redisCC); 
+
 
 private:
 	storages::redis::ClientPtr redis_;

@@ -101,7 +101,7 @@ components_manager:
         scopes:
           - admin
 
-   get-marks-handler:
+    get-marks-handler:
       path: /student/marks
       method: GET
       task_processor: main-task-processor
@@ -110,6 +110,11 @@ components_manager:
           - bearer
         scopes:
           - student
+
+    user-role-handler:
+      path: /user/role
+      method: GET
+      task_processor: main-task-processor
 
     hello-handler:
       path: /testing/hello
