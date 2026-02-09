@@ -1,0 +1,14 @@
+components:
+  schemas:
+    CheckingQueueArray:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          gv-name:
+            type: string
+          work-type:
+            type: string
+          old-work-number:
+            type: integer

@@ -50,7 +50,8 @@ AuthCheckerBearer::CheckAuth(const server::http::HttpRequest &request,
       return AuthCheckResult{AuthCheckResult::Status::kForbidden,
                              {},
                              "No '" + scope.GetValue() + "' permission"};
-	context.SetData("username", cacheEntry.username);
+	context.SetData<std::string>("username", cacheEntry.username);
+	context.SetData<std::int64_t>("user_id", cacheEntry.user_id);
   return {};
 }
 

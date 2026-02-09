@@ -1,0 +1,16 @@
+components:
+  schemas:
+    MarksArray:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          work-type:
+            type: string
+          old-work-number:
+            type: integer
+          mark:
+            type: string
+          status:
+            type: string

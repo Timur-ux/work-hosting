@@ -43,7 +43,7 @@ LoginHandler::LoginHandler(const components::ComponentConfig &config,
 }
 
 yaml_config::Schema LoginHandler::GetStaticConfigSchema() {
-	return yaml_config::MergeSchemas<HttpHandlerJsonBase>(R"(
+  return yaml_config::MergeSchemas<HttpHandlerJsonBase>(R"(
 type: object
 additionalProperties: false
 description: provide auto token ttl
@@ -62,8 +62,8 @@ LoginHandler::HandleRequestJsonThrow(const HttpRequest &request,
       http::content_type::kApplicationJson);
   auto body = request_json.As<login::LoginRequestBody>();
 
-	using storages::postgres::TransactionOptions;
-	TransactionOptions opts{TransactionOptions::kReadOnly};
+  using storages::postgres::TransactionOptions;
+  TransactionOptions opts{TransactionOptions::kReadOnly};
   auto transaction =
       db_->Begin("login", storages::postgres::ClusterHostType::kSlave, opts);
 
@@ -77,30 +77,30 @@ LoginHandler::HandleRequestJsonThrow(const HttpRequest &request,
     throw server::handlers::ResourceNotFound(
         ExternalBody{"Login or password incorrect"});
 
-  using RoleBimap = storages::postgres::io::CppToUserPg<UserRole>;
   std::string token = utils::hash(body.username + utils::genSalt(25));
   transaction.Commit();
   auth::AuthCacheEntry cacheEntry{
       user.id,
       user.username,
       std::vector<std::string>{
-          RoleBimap::enumerators.TryFindBySecond(user.role)->data()},
+          UserRoleMapper.TryFindBySecond(user.role)->data()},
   };
 
   auto cacheEntryValue = formats::json::ValueBuilder{cacheEntry}.ExtractValue();
 
   using std::chrono::milliseconds;
-	try{
-		redis_
-				->Set(token, formats::json::ToString(cacheEntryValue),
-							milliseconds(tokenTTL_ms_), redisCC_)
-				.Get();
-	} catch(std::exception &e) {
-		LOG_ERROR() << "Set auth token to redis failed: " << e.what();
-	}
+  try {
+    redis_
+        ->Set(token, formats::json::ToString(cacheEntryValue),
+              milliseconds(tokenTTL_ms_), redisCC_)
+        .Get();
+  } catch (std::exception &e) {
+    LOG_ERROR() << "Set auth token to redis failed: " << e.what();
+  }
   return formats::json::ValueBuilder{login::LoginResponseBody{"success", token}}
       .ExtractValue();
-  return formats::json::ValueBuilder{login::LoginResponseBody{"success", "some"}}
+  return formats::json::ValueBuilder{
+      login::LoginResponseBody{"success", "some"}}
       .ExtractValue();
 }
 

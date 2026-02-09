@@ -16,16 +16,14 @@ if(${CMAKE_PROJECT_NAME}_SRC)
 endif()
 
 find_package(ZeroMQ QUIET)
+# libzmq autotools install: fallback to pkg-config
 if(NOT ZeroMQ_FOUND)
-  # libzmq autotools install: fallback to pkg-config
-  if(NOT ZeroMQ_FOUND)
-    message(STATUS "CMake libzmq package not found, trying again with pkg-config (normal install of zeromq)")
-    list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/third_party/cppzmq/libzmq-pkg-config)
-    find_package(ZeroMQ REQUIRED)
-  endif()
+	message(STATUS "CMake libzmq package not found, trying again with pkg-config (normal install of zeromq)")
+	list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+	find_package(ZeroMQ QUIET)
 	if(NOT ZeroMQ_FOUND)
 		message("Global installation of zeromq not found using local subdir")
-		add_subdirectory(third_party/cppzmq)
+		add_subdirectory(third_party/libzmq)
 	endif()
 endif()
 

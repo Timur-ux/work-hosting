@@ -81,6 +81,36 @@ components_manager:
         scopes:
           - student
 
+    get-works-handler:
+      path: /works
+      method: GET
+      task_processor: main-task-processor
+
+    get-checking-queue-handler:
+      path: /queue
+      method: GET
+      task_processor: main-task-processor
+
+    pop-checking-queue-handler:
+      path: /admin/queue
+      method: DELETE
+      task_processor: main-task-processor
+      auth:
+        types:
+          - bearer
+        scopes:
+          - admin
+
+   get-marks-handler:
+      path: /student/marks
+      method: GET
+      task_processor: main-task-processor
+      auth:
+        types:
+          - bearer
+        scopes:
+          - student
+
     hello-handler:
       path: /testing/hello
       method: GET
