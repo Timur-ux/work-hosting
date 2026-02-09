@@ -130,13 +130,9 @@ RegisterHandler::HandleRequestJsonThrow(const HttpRequest &request,
 
   auto user = res.AsSingleRow<User>(storages::postgres::kRowTag);
 
-  std::string initials =
-      fmt::format("{}{}", body.first_name[0], body.father_name[0]);
-
   res = transaction.Execute(sql::kInsertStudent, user.id, body.gv_name,
                             userBase.group_number, userBase.in_group_order,
-                            body.first_name, body.last_name, body.father_name,
-                            initials, body.email);
+                            body.first_name, body.last_name, body.father_name, body.email);
   if (res.RowsAffected()) {
     transaction.Commit();
     request.SetResponseStatus(server::http::HttpStatus::kCreated);

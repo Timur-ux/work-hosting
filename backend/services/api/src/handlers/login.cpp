@@ -58,12 +58,10 @@ LoginHandler::Value
 LoginHandler::HandleRequestJsonThrow(const HttpRequest &request,
                                      const Value &request_json,
                                      RequestContext &context) const {
-	LOG_DEBUG() << "HANDLE STARTED";
   request.GetHttpResponse().SetContentType(
       http::content_type::kApplicationJson);
   auto body = request_json.As<login::LoginRequestBody>();
 
-	LOG_DEBUG() << "HANDLE REQUEST BODY PARSED";
 	using storages::postgres::TransactionOptions;
 	TransactionOptions opts{TransactionOptions::kReadOnly};
   auto transaction =

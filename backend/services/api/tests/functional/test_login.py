@@ -11,6 +11,7 @@ async def test_login_incorrect(service_client):
     })
 
     assert response.status == 404
+    assert response.text == "Login or password incorrect"
 
 
 @pytest.mark.pgsql('workHosting', files=['test_register.sql'])

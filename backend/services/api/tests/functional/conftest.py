@@ -1,12 +1,31 @@
 import pytest
+import json
 
 from testsuite.databases.pgsql import discover
 
-pytest_plugins = ['pytest_userver.plugins.postgresql']
+pytest_plugins = ['pytest_userver.plugins.postgresql',
+                  'pytest_userver.plugins.redis']
+
+
+@pytest.fixture(scope='session')
+def service_env(redis_sentinels):
+    secdist_config = {
+        'redis_settings': {
+            'taxi-tmp': {
+                'password': '',
+                'database_index': 0,
+                'sentinels': redis_sentinels,
+                'shards': [{'name': 'test_master0'}],
+            },
+        },
+    }
+
+    return {'SECDIST_CONFIG': json.dumps(secdist_config)}
 
 
 @pytest.fixture(scope='session')
 def pgsql_local(service_source_dir, pgsql_local_create):
+    print(service_source_dir)
     databases = discover.find_schemas(
         'api',
         [service_source_dir.joinpath('../../../init/pg_tests')],
@@ -15,20 +34,19 @@ def pgsql_local(service_source_dir, pgsql_local_create):
 
 # static data
 
-
 @pytest.fixture()
 def first_name():
-    return "biba"
+    return "Биба"
 
 
 @pytest.fixture()
 def last_name():
-    return "boba"
+    return "Боба"
 
 
 @pytest.fixture()
 def father_name():
-    return "pipa"
+    return "Пипа"
 
 
 @pytest.fixture()

@@ -33,7 +33,6 @@ struct Student {
   std::string first_name;
   std::string last_name;
   std::string father_name;
-  std::string initials;
   std::string email;
   userver::storages::postgres::TimePointWithoutTz updated_at;
 };

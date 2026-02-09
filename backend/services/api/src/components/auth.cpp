@@ -1,6 +1,7 @@
 #include "components/auth.hpp"
 #include "schemas/auth.hpp"
 #include "userver/http/common_headers.hpp"
+#include "userver/logging/log.hpp"
 #include "userver/server/handlers/exceptions.hpp"
 #include "userver/storages/redis/client.hpp"
 #include <cstdlib>
@@ -49,6 +50,7 @@ AuthCheckerBearer::CheckAuth(const server::http::HttpRequest &request,
       return AuthCheckResult{AuthCheckResult::Status::kForbidden,
                              {},
                              "No '" + scope.GetValue() + "' permission"};
+	context.SetData("username", cacheEntry.username);
   return {};
 }
 

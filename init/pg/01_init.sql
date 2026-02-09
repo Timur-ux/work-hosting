@@ -23,10 +23,9 @@ CREATE TABLE students (
 	gv_name				VARCHAR(60) NOT NULL UNIQUE,
 	group_number	INTEGER NOT NULL,
 	in_group_order INTEGER NOT NULL,
-	first_name		VARCHAR(30) NOT NULL,
-	last_name			VARCHAR(30) NOT NULL,
-	father_name		VARCHAR(30) NOT NULL,
-	initials			VARCHAR(2)  NOT NULL,
+	first_name		VARCHAR(50) NOT NULL,
+	last_name			VARCHAR(50) NOT NULL,
+	father_name		VARCHAR(50) NOT NULL,
 	email					VARCHAR(128) NOT NULL,
 	updated_at		TIMESTAMP NOT NULL DEFAULT NOW()
 );
