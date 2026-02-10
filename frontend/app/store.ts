@@ -2,14 +2,14 @@ import type { Action, ThunkAction } from "@reduxjs/toolkit";
 import { configureStore } from "@reduxjs/toolkit";
 
 // import reducers
-import userDataReducer from "./_reducers/userData";
+import profileState from "./_reducers/profile";
 import { useDispatch, useSelector } from "react-redux";
 // import reducers
 
 export const makeStore = () =>
   configureStore({
     reducer: {
-      userData: userDataReducer,
+      profile: profileState,
     },
   });
 

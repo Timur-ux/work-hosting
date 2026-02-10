@@ -1,5 +1,5 @@
 module.exports = {
 	output: "standalone",
-	crossOrigin: "anonymous"
+	allowedDevOrigins: ["localhost:80"]
 }
 
