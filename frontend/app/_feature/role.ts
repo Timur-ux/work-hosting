@@ -1,26 +1,43 @@
-'use server';
-import client, { RequestError } from "./client";
+"use server";
+import { AxiosError } from "axios";
+import client, { Response } from "./client";
 
 export type UserRole = string;
-const GetUserRole: (bearer_token: string) => Promise<UserRole> = async (bearer_token: string) => {
+const GetUserRole: (
+  bearer_token: string,
+) => Promise<Response<UserRole>> = async (bearer_token: string) => {
   try {
     const response = await client.get("/user/role", {
-			headers: {"Authorization": `Bearer ${bearer_token}`}
-		});
-		
-		if(Math.floor(response.status / 100) != 2)
-			console.warn("Get user role request return not 2xx status code: ", response.status);
+      headers: { Authorization: `Bearer ${bearer_token}` },
+    });
+    if (Math.floor(response.status / 100) != 2) {
+      return {
+				uri: "/user/role",
+        payload: null,
+        error: {
+          status: response.status,
+          message: response.data,
+        },
+      };
+    }
 
     const userRole = response.data;
-    return userRole as UserRole;
+    return {
+			uri: "/user/role",
+      payload: userRole,
+      error: null,
+    };
   } catch (e) {
-    const error = e as Error;
-    throw JSON.stringify({
-      status: 500,
-      message: error.message,
-    } as RequestError);
+    const error = e as AxiosError;
+    return {
+      payload: null,
+			uri: "/user/role",
+      error: {
+        status: error.status,
+        message: error.message,
+      },
+    };
   }
 };
 
 export default GetUserRole;
-

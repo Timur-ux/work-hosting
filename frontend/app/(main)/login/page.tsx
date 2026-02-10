@@ -2,70 +2,64 @@
 import React, { useState } from "react";
 import Form from "next/form";
 import { buttonClass } from "@/_styles/globals";
-import LoginAndGetToken, { BearerToken } from "@/_feature/login";
-import client, { RequestError } from "@/_feature/client";
+import LoginAndGetToken from "@/_feature/login";
+import { IsValidResponse, RequestError } from "@/_feature/client";
 import NetworkError from "@/_components/NetworkError";
-import GetUserRole from "@/_feature/role";
 import { useAppDispatch } from "@/hooks";
-import { login } from "@/_reducers/profile";
+import GetUserData from "@/_feature/userData";
+import { login, logout, ProfileData } from "@/_reducers/profile";
+
+const LoginError = ({ error }: { error: RequestError }) => {
+	console.log("LOGIN ERROR:", error);
+  const message =
+    error.status == 404 ? "Неправильный логин или пароль" : error.message;
+  return (
+    <div className="w-full text-red-500 flex justify-center">{`Error: ${message}`}</div>
+  );
+};
 
 const Login = () => {
   const [error, setError] = useState<RequestError | null>(null);
+  const [loginStatus, setLoginStatus] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   async function ProcessLogin(formData: FormData) {
-		setError(null);
+    setError(null);
+    setLoginStatus(false);
+		dispatch(logout({}));
     const username = formData.get("username") as string;
     const password = formData.get("password") as string;
-    let bearerToken = "";
-    try {
-      bearerToken = await LoginAndGetToken(username, password);
-    } catch (e) {
-      const error = e as Error;
-      setError(JSON.parse(error.message));
-      return;
-    }
-    localStorage.setItem("bearer-token", bearerToken);
-    let userRole = null;
-    try {
-      userRole = await GetUserRole(bearerToken);
-    } catch (e) {
-      const error = e as Error;
-      setError(JSON.parse(error.message));
-      return;
-    }
-    if (userRole === null) {
-      setError({ status: 500, message: "Can't get user role" });
-      return;
-    } else if (userRole == "admin") {
-      dispatch(
-        login({
-          profile: {
-            username: username,
-            role: "admin",
-            data: null,
-          },
-        }),
-      );
-    } else if (userRole != "student") {
+    const response1 = await LoginAndGetToken(username, password);
+    if (!IsValidResponse(response1)) {
       setError({
-        status: 500,
-        message: ` Server return undefined user role: ${userRole}`,
+        status: response1.error?.status as number,
+        message: response1.error?.message as string,
       });
+			return;
     }
+    const bearerToken = response1.payload as string;
+    localStorage.setItem("bearer-token", bearerToken);
 
-    let studentData = null;
-    try {
-    } catch (e) {
-      const error = e as Error;
-      setError(JSON.parse(error.message));
-      return;
+    const response2 = await GetUserData(bearerToken, username);
+    if (!IsValidResponse(response2)) {
+      setError({
+        status: response2.error?.status as number,
+        message: response2.error?.message as string,
+      });
+			return;
     }
+    dispatch(login({ profile: response2.payload as ProfileData }));
+    setLoginStatus(true);
   }
 
   const inputClass = "bg-white rounded w-full my-2 md:px-5 md:py-2 text-black";
   return (
     <div className="text-sm md:text-xl">
-      {error !== null && <NetworkError error={error} />}
+      {error !== null && <LoginError error={error} />}
+      {loginStatus && (
+        <div className="text-green-500 text-xl w-full flex justify-center">
+          Вы успешно вошли в профиль!
+        </div>
+      )}
       <Form className="items-center" action={ProcessLogin}>
         <div className="grid grid-cols-3 grid-rows-3 place-items-center items-baseline">
           <div>Логин(gitverse ник)</div>

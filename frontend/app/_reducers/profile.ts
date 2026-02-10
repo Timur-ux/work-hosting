@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 
-interface StudentData {
+export interface StudentData {
   first_name: string;
   last_name: string;
   father_name: string;
   email: string;
   group_number: number;
-  in_group_number: number;
+  in_group_order: number;
 }
 
 export interface ProfileData {

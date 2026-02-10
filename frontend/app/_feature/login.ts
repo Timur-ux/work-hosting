@@ -1,12 +1,12 @@
-'use server';
-import { ifError } from "assert";
-import client, { RequestError } from "./client";
+"use server";
+import { AxiosError } from "axios";
+import client, { RequestError, Response } from "./client";
 
 export type BearerToken = string;
 const LoginAndGetToken: (
   username: string,
   password: string,
-) => Promise<BearerToken> = async (
+) => Promise<Response<BearerToken>> = async (
   username: string,
   password: string,
 ) => {
@@ -15,17 +15,33 @@ const LoginAndGetToken: (
       username: username,
       password: password,
     });
-		if(Math.floor(loginResponse.status / 100) != 2)
-			console.warn("Login request return not 2xx status code: ", loginResponse.status);
-		
+    if (Math.floor(loginResponse.status / 100) != 2) {
+      return {
+        payload: null,
+				uri: "/login",
+        error: {
+          status: loginResponse.status,
+          message: loginResponse.data,
+        },
+      };
+    }
+
     const token = loginResponse.data["bearer-token"];
-    return token as BearerToken;
+    return {
+			uri: "/login",
+      payload: token as BearerToken,
+      error: null,
+    };
   } catch (e) {
-    const error = e as Error;
-    throw JSON.stringify({
-      status: 500,
-      message: error.message,
-    } as RequestError);
+    const error = e as AxiosError;
+    return {
+      payload: null,
+			uri: "/login",
+      error: {
+        status: error.status,
+        message: error.message,
+      },
+    };
   }
 };
 
