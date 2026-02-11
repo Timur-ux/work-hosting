@@ -12,24 +12,24 @@ const GetStudentData: (
   bearer_token: string,
 ) => Promise<Response<StudentData>> = async (bearer_token: string) => {
   try {
-    const response = await client.get("/student/profile", {
+    const response = await client.get("/api/student/profile", {
       headers: { Authorization: `Bearer ${bearer_token}` },
     });
 
     if (Math.floor(response.status / 100) != 2) {
       return {
-        uri: "/student/profile",
+        uri: "/api/student/profile",
         payload: null,
         error: {
           status: response.status,
           message: response.statusText,
         },
-      };
+      } as Response<StudentData>;
     }
 
     const studentData = response.data;
     return {
-      uri: "/student/profile",
+      uri: "/api/student/profile",
       error: null,
       payload: {
         first_name: studentData["first-name"],
@@ -43,13 +43,10 @@ const GetStudentData: (
   } catch (e) {
     const error = e as AxiosError;
     return {
-      uri: "/student/profile",
+      uri: "/api/student/profile",
       payload: null,
-      error: {
-        status: error.status,
-        message: error.message,
-      },
-    };
+			error: error.response?.data
+    } as Response<StudentData>;
   }
 };
 

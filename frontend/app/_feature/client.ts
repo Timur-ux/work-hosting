@@ -1,8 +1,20 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: "http://localhost:80/api",
+  baseURL: "http://localhost:80",
 });
+
+client.interceptors.request.use((value) => {
+	console.log("Request url: ", value.url);
+	return value
+}, (error) => error);
+
+client.interceptors.response.use((value)=>value, (error) => {
+	console.log("INTERCEPT ERROR: ", error);
+	if("response" in error && "code" in error["response"])
+		error["response"]["status"] = error["response"]["code"];
+	return error;
+})
 
 export type RequestError = {
   status: number;

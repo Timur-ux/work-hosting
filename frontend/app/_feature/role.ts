@@ -7,36 +7,33 @@ const GetUserRole: (
   bearer_token: string,
 ) => Promise<Response<UserRole>> = async (bearer_token: string) => {
   try {
-    const response = await client.get("/user/role", {
+    const response = await client.get("/api/user/role", {
       headers: { Authorization: `Bearer ${bearer_token}` },
     });
     if (Math.floor(response.status / 100) != 2) {
       return {
-				uri: "/user/role",
+				uri: "/api/user/role",
         payload: null,
         error: {
           status: response.status,
           message: response.data,
         },
-      };
+      } as Response<UserRole>;
     }
 
     const userRole = response.data;
     return {
-			uri: "/user/role",
+			uri: "/api/user/role",
       payload: userRole,
       error: null,
-    };
+    } as Response<UserRole>;
   } catch (e) {
     const error = e as AxiosError;
     return {
       payload: null,
-			uri: "/user/role",
-      error: {
-        status: error.status,
-        message: error.message,
-      },
-    };
+			uri: "/api/user/role",
+			error: error.response?.data
+    } as Response<UserRole>;
   }
 };
 

@@ -7,6 +7,7 @@ components:
         gv-name:
           type: string
           minLength: 3
+          maxLength: 60
         first-name:
           type: string
           minLength: 1

@@ -16,7 +16,7 @@ export default function RootLayout({
   }
   return (
     <Provider store={storeRef.current}>
-      <div className="flex flex-col w-full bg-black text-white h-screen">
+      <div className="my-10 flex flex-col w-full bg-black text-white h-screen">
         <Header />
         <div className="mb-auto flex w-full justify-center place-items-center h-full">
           {children}

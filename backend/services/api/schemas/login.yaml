@@ -7,6 +7,7 @@ components:
         username:
           type: string
           minLength: 3
+          maxLength: 60
         password:
           type: string
           minLength: 3
