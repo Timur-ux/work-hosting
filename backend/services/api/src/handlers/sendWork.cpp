@@ -9,16 +9,13 @@
 #include <userver/server/handlers/exceptions.hpp>
 
 namespace impl {
-Work workMap(const check::WorkRequest &requestBody) {
+Work workMap(const check::WorkRequest &requestBody, const std::string &username) {
   Work::Type type =
-      requestBody.workType == "LR" ? Work::Type::LR : Work::Type::KP;
-  if (!requestBody.workNumber.has_value())
+      requestBody.work_type == "LR" ? Work::Type::LR : Work::Type::KP;
+  if (!requestBody.old_work_number)
     throw userver::server::handlers::ResourceNotFound(userver::server::handlers::ExternalBody{"Work number not set!"});
-  if (!requestBody.gvName.has_value())
-    throw userver::server::handlers::ResourceNotFound(userver::server::handlers::ExternalBody{"Gitverse name not set!"});
 
-  return Work(type, static_cast<unsigned short>(*requestBody.workNumber),
-              *requestBody.gvName);
+  return Work(type, static_cast<unsigned short>(requestBody.old_work_number), username);
 }
 } // namespace impl
 
@@ -34,8 +31,10 @@ SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
                                         const Value &request_json,
                                         RequestContext &context) const {
 	request.GetHttpResponse().SetContentType(userver::http::content_type::kApplicationJson);
+
+	const auto &username = context.GetData<std::string>("username");
   auto requestBody = request_json.As<check::WorkRequest>();
-  Work work = impl::workMap(requestBody);
+  Work work = impl::workMap(requestBody, username);
 
   workHolder_.addTask(work);
   return userver::formats::json::ValueBuilder{

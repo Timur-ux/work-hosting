@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import client from "@/_feature/client";
 
 export interface StudentData {
   first_name: string;
@@ -38,9 +39,14 @@ export const profileStateSlice = createSlice({
       state.profile = action.payload.profile;
     },
 		logout(state, __) {
+			if(typeof localStorage != 'undefined') {
+				localStorage.removeItem("bearer-token");
+				localStorage.removeItem("username");
+			}
+
 			state.loggedIn = false;
 			state.profile = null;
-		}
+		},
   },
 });
 

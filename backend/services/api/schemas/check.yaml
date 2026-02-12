@@ -4,14 +4,15 @@ components:
       type: object
       additionalProperties: false
       properties:
-        workType:
+        work-type:
           type: string
           default: LR
-        workNumber:
+        old-work-number:
           type: integer
           minimum: 1
-        gvName:
-          type: string
+      required:
+        - work-type
+        - old-work-number
 
     SendWorkResponse:
       type: string

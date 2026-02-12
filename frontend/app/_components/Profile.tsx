@@ -1,9 +1,13 @@
-import { SelectIsLoggedIn, SelectProfile } from "@/_reducers/profile";
-import { useAppSelector } from "@/hooks";
+"use client";
+import { login, logout, ProfileData, SelectIsLoggedIn, SelectProfile } from "@/_reducers/profile";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import { Button, Menu, MenuItem } from "@mui/material";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { buttonClass } from "@/_styles/globals";
+import GetUserData from "@/_feature/userData";
+import { IsValidResponse } from "@/_feature/client";
+import { useRouter } from "next/navigation";
 
 type Props = {
   buttonClass?: string;
@@ -24,11 +28,45 @@ const Profile = ({
   buttonClass = defaultProps.buttonClass,
   menuOptClass = defaultProps.menuOptClass,
 }: Props) => {
+	const router = useRouter()
   const loggedIn = useAppSelector(SelectIsLoggedIn);
   const profile = useAppSelector(SelectProfile);
+	const dispatch = useAppDispatch();
   const [anchorElement, setAnchorElement] = React.useState<null | HTMLElement>(
     null,
   );
+  async function checkToken() {
+    if (typeof localStorage == "undefined") 
+			return;
+		const token = localStorage.getItem("bearer-token");
+		const username = localStorage.getItem("username")
+		if (token == null) {
+			console.log('auth token not found in local storage');
+			return;
+		}
+		if(username == null) {
+			console.log('auth token found in local storage but username not set');
+			return;
+		}
+		
+		console.log("Found auth token in local storage, trying to auth");
+		const response = await GetUserData(token, username);
+    if (!IsValidResponse(response)) {
+			if(response.error?.status == 401) 
+				console.log("token expired, remove it from local storage")
+			 else 
+				console.log("Undefined error while trying fetch user data by token stored in local storage, removing it");
+			
+				localStorage.removeItem("bearer-token");
+				localStorage.removeItem("username");
+      return;
+    }
+    dispatch(login({ profile: response.payload as ProfileData }));
+  }
+
+  useEffect(() => {
+    checkToken();
+  }, []);
 
   if (!loggedIn) {
     return (
@@ -57,7 +95,11 @@ const Profile = ({
   };
 
   const redirectTo = (href: string) => {
-    alert(`Redirecting to ${href}`);
+		if(href != "/logout") {
+			router.push(href);
+			return;
+		}
+		dispatch(logout({}));
   };
 
   const menuOpts: MenuOpt[] = [];
@@ -71,10 +113,6 @@ const Profile = ({
   }
   menuOpts.push({ href: "/logout", text: "Выйти из профиля" });
 
-	async function checkToken() {
-
-	}
-
   return (
     <div>
       <Button
@@ -85,7 +123,7 @@ const Profile = ({
         aria-expanded={isDroppedDown ? "true" : undefined}
         onClick={onProfileClicked}
       >
-        Профиль
+			{profile.username}
       </Button>
       <Menu
         id="profile-menu"
@@ -98,8 +136,9 @@ const Profile = ({
           },
         }}
       >
-        {menuOpts.map((value) => (
+        {menuOpts.map((value, index) => (
           <MenuItem
+            key={index}
             className={menuOptClass}
             onClick={() => redirectTo(value.href)}
           >

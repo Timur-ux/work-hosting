@@ -1,40 +1,19 @@
 "use server";
 import { AxiosError } from "axios";
-import client, { Response } from "./client";
+import client, { DoRequest, Response } from "./client";
 
 export type UserRole = string;
 const GetUserRole: (
   bearer_token: string,
 ) => Promise<Response<UserRole>> = async (bearer_token: string) => {
-  try {
-    const response = await client.get("/api/user/role", {
-      headers: { Authorization: `Bearer ${bearer_token}` },
-    });
-    if (Math.floor(response.status / 100) != 2) {
-      return {
-				uri: "/api/user/role",
-        payload: null,
-        error: {
-          status: response.status,
-          message: response.data,
-        },
-      } as Response<UserRole>;
-    }
-
-    const userRole = response.data;
-    return {
-			uri: "/api/user/role",
-      payload: userRole,
-      error: null,
-    } as Response<UserRole>;
-  } catch (e) {
-    const error = e as AxiosError;
-    return {
-      payload: null,
-			uri: "/api/user/role",
-			error: error.response?.data
-    } as Response<UserRole>;
-  }
+  const response = await DoRequest(
+    "GET",
+    "/user/role",
+    bearer_token,
+    null,
+    (data) => data,
+  );
+  return response;
 };
 
 export default GetUserRole;

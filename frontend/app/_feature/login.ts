@@ -1,6 +1,6 @@
 "use server";
 import { AxiosError } from "axios";
-import client, { RequestError, Response } from "./client";
+import client, { DoRequest, Response } from "./client";
 
 export type BearerToken = string;
 const LoginAndGetToken: (
@@ -10,36 +10,12 @@ const LoginAndGetToken: (
   username: string,
   password: string,
 ) => {
-  try {
-    const loginResponse = await client.post("/api/login", {
+	const token = await DoRequest<BearerToken>("POST", "/login", null, {
       username: username,
       password: password,
-    });
-    if (Math.floor(loginResponse.status / 100) != 2) {
-      return {
-        payload: null,
-				uri: "/api/login",
-        error: {
-          status: loginResponse.status,
-          message: loginResponse.data,
-        },
-      } as Response<BearerToken>;
-    }
+    }, (data) => data["bearer-token"]);
 
-    const token = loginResponse.data["bearer-token"];
-    return {
-			uri: "/api/login",
-      payload: token as BearerToken,
-      error: null,
-    } as Response<BearerToken>;
-  } catch (e) {
-    const error = e as AxiosError;
-    return {
-      payload: null,
-			uri: "/api/login",
-      error: error.response?.data,
-    } as Response<BearerToken>;
-  }
+	return token;
 };
 
 export default LoginAndGetToken;

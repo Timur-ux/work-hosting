@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import Form from "next/form";
 import { buttonClass } from "@/_styles/globals";
 import LoginAndGetToken from "@/_feature/login";
@@ -53,6 +53,7 @@ const Login = () => {
     }
     const bearerToken = response1.payload as string;
     localStorage.setItem("bearer-token", bearerToken);
+    localStorage.setItem("username", username);
 
     const response2 = await GetUserData(bearerToken, username);
     if (!IsValidResponse(response2)) {
