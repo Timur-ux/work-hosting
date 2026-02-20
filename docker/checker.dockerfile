@@ -15,7 +15,7 @@ RUN ldd /app/build-release/services/checker/checker | grep "=>" | awk '{print $3
 
 FROM ubuntu:24.04 AS checker
 
-RUN apt update && apt install -y build-essential sudo cmake git && apt clean all
+RUN apt update && apt install -y build-essential sudo cmake netcat-traditional git && apt clean all
 RUN if [ ! -z $(id 1000 | grep "no such" ) ]; then \
 		useradd -m -u 1000 checker;\
 	else \

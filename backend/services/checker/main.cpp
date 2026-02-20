@@ -1,17 +1,18 @@
+#include "CheckerRequest.hpp"
 #include "logger.hpp"
 #include "work.hpp"
 #include "zmq.hpp"
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
-#include <ios>
-#include <iostream>
 #include <stdexcept>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "nlohmann/json.hpp"
+#include "Serializers.hpp"
 
+using json = nlohmann::json;
 
-void startJob(Work work) {
+void startJob(CheckerRequest r) {
   int pipefd[2];
   if (pipe(pipefd) == -1)
     throw std::runtime_error("Can't create a pipe");
@@ -31,21 +32,32 @@ void startJob(Work work) {
   int oldstdout = dup(1);
   close(pipefd[0]);
   dup2(pipefd[1], 1);
-  printf("%s\n", work.typeAsString());
-  printf("%d\n", work.number());
-  printf("%s\n", work.gvName().c_str());
+  printf("%s\n", r.work.typeAsString());
+  printf("%d\n", r.work.number());
+  printf("%s\n", r.work.gvName().c_str());
+	printf("%s\n", r.first_name.c_str());
+	printf("%s\n", r.last_name.c_str());
+	printf("%s\n", r.father_name.c_str());
+	printf("%d\n", r.group_number);
+	printf("%d\n", r.in_group_order);
   fflush(stdout);
   close(pipefd[1]);
   dup2(oldstdout, 1);
 }
 
 int main(int argc, const char *argw[]) {
+  if (!getenv("CHECKING_QUEUE_UPDATER_HOST"))
+    throw std::runtime_error("No CHECKING_QUEUE_UPDATER_HOST env specified");
+  if (!getenv("CHECKING_QUEUE_UPDATER_PORT"))
+    throw std::runtime_error("No CHECKING_QUEUE_UPDATER_PORT env specified");
+
   const char *logPath = getenv("LOG_PATH");
   if (!logPath)
     throw std::runtime_error("No LOG_PATH env specified");
 
   zmq::context_t context{};
   zmq::socket_t socket{context, zmq::socket_type::pull};
+	socket.set(zmq::sockopt::rcvtimeo, 3000);
 
   const char *checkerAddr = getenv("CHECKER_ADDR");
   if (!checkerAddr)
@@ -57,15 +69,14 @@ int main(int argc, const char *argw[]) {
 
   zmq::message_t msg;
   while (true) {
-    TimedLog{} << "Wait for message";
-
     auto recvRetVal = socket.recv(msg);
+		if(!recvRetVal)
+			continue;
     TimedLog{} << "Recieved: " << msg.to_string();
+		CheckerRequest request = nlohmann::json::parse(msg.to_string());
 
-    Work work = Work::from_string(msg.to_string());
-    TimedLog{} << "Created work: " << work.to_string();
-
-    startJob(std::move(work));
+    startJob(std::move(request));
+		std::cout << "Job created"<< '\n';
   }
 
 	TimedLog{} << "Wait for jobs ending...";

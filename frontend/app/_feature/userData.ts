@@ -1,19 +1,28 @@
 "use server";
 import { ProfileData, StudentData } from "@/_reducers/profile";
-import client, {
-  CastResponse,
-  DoRequest,
-  IsValidResponse,
-  Response,
-} from "./client";
+import { CastResponse, DoRequest, IsValidResponse, Response } from "./client";
 import GetUserRole from "./role";
-import { AxiosError } from "axios";
+
+const nullStudentData: any = {
+  email: "null",
+  "first-name": "null",
+  "last-name": "null",
+  "father-name": "null",
+  "group-number": -1,
+  "in-group-order": -1,
+};
 
 const GetStudentData: (
   bearer_token: string,
 ) => Promise<Response<StudentData>> = async (bearer_token: string) => {
-	const response = await DoRequest("GET", "/student/profile", bearer_token, null, (data) => data);
-	return response;
+  const response = await DoRequest(
+    "GET",
+    "/student/profile",
+    bearer_token,
+    null,
+    (data) => data,
+  );
+  return response;
 };
 
 const GetUserData: (
@@ -50,7 +59,18 @@ const GetUserData: (
   const studentDataResponse = await GetStudentData(bearer_token);
   if (!IsValidResponse(studentDataResponse))
     return CastResponse(studentDataResponse);
-  const studentData = studentDataResponse.payload;
+  const raw =
+    studentDataResponse.payload != null
+      ? studentDataResponse.payload
+      : nullStudentData;
+  const studentData: StudentData = {
+    email: raw["email"],
+    first_name: raw["first-name"],
+    last_name: raw["last-name"],
+    father_name: raw["father-name"],
+    group_number: raw["group-number"],
+    in_group_order: raw["in-group-order"],
+  };
   return {
     uri: null,
     error: null,

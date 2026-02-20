@@ -1,6 +1,7 @@
 #ifndef HANDLER_SEND_WORK_HPP_
 #define HANDLER_SEND_WORK_HPP_
 #include "components/workHolder.hpp"
+#include "userver/storages/postgres/postgres_fwd.hpp"
 #pragma once
 #include <userver/server/handlers/http_handler_json_base.hpp>
 namespace SERVICE_NAMESPACE {
@@ -13,6 +14,7 @@ public:
 	Value HandleRequestJsonThrow(const HttpRequest& request, const Value& request_json, RequestContext& context) const;
 private:
 	WorkHolder & workHolder_;
+	userver::storages::postgres::ClusterPtr db_;
 };
 } // namespace SERVICE_NAMESPACE
 #endif // !HANDLER_SEND_WORK_HPP_

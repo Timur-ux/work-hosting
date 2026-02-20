@@ -5,10 +5,8 @@ set -o pipefail
 
 user="checker"
 if [ "$(whoami)" == "root" ]; then
-	if [ ! -z "$(id $user 2>/dev/stdout | grep "no such")" ]; then
-		adduser -u 1000 -m "$checker"
-	fi
-	su "$user"
+	echo "No use under root allowed"
+	return 1
 fi
 
 # constants
@@ -28,6 +26,11 @@ docsDir="$baseDir/docs"
 read workType
 read workNumber
 read student
+read first_name
+read last_name
+read father_name
+read group_number
+read in_group_order
 
 workName="${workType}${workNumber}-${student}"
 logFile="${docsDir}/logs/$workName.log"
@@ -85,7 +88,6 @@ doStep() {
 		echo "Usage: $0 <step name> <step func>"
 		exit 1
 	fi
-
 	stepStart "$1" >> "$logFile"
 	message="$($2 2>/dev/stdout)"
 	if [ "$?" != "0" ]; then
@@ -98,19 +100,24 @@ doStep() {
 # step 0: fetching repo
 fetchRepository() {
 	local gvSshLink="ssh://git@gitverse.ru:2222/${organizationName}/${workName}.git"
+	echo "a"
 	if [[ -d "${worksDir}/${workName}" ]]; then
+		echo "a1"
 		cd "${worksDir}/${workName}" && \
 			git clean -fd && git fetch origin && git reset --hard
+		echo "a2"
 		return $?
 	fi
+	echo "b1"
 	message=$(git clone "$gvSshLink" "${worksDir}/${workName}" 2>/dev/stdout)
+	echo "b2"
 	if [ "$?" != "0" ]; then
 		echo "$message"
 		return 1
 	fi
 	return 0
 }
-doStep "Fetching repository" fetchRepository
+doStep "Скачивание репозитория" fetchRepository
 
 cd "${worksDir}/${workName}"
 # step 1: pull solution branch
@@ -122,7 +129,7 @@ pullSolutionBranch() {
 	fi
 	return 0
 }
-doStep "Pull solution branch" pullSolutionBranch
+doStep "Скачивание ветки solution" pullSolutionBranch
 
 # step 2: switch to solution branch
 switchToSolutionBranch() {
@@ -133,7 +140,7 @@ switchToSolutionBranch() {
 	fi
 	return 0
 }
-doStep "Switch to solution branch" switchToSolutionBranch
+doStep "Переход на ветку solution" switchToSolutionBranch
 
 # step 3: check solution/ and solution/report/ folders
 checkFolders() {
@@ -146,7 +153,7 @@ checkFolders() {
 	fi
 	return 0
 }
-doStep "Check solution/ and solution/report/ folders" checkFolders
+doStep "Проверка наличия solution/ и solution/report/ папок" checkFolders
 
 cd ./solution
 # step 3: check for report and applications
@@ -166,21 +173,19 @@ checkReportAndApplications() {
 		return 1
 	fi
 
-	repoName=$(ls ./report | grep -E "^${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")
-	echo "$repoName"
-	if [[ -z "$repoName" ]]; then
-		echo "Report name not match required pattern like [${rusLRName}${workNumber}_ИвановИИ_125_12.pdf] (regex like \"^${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$\")"
-		echo "Or it is not exist"
+	reportName="${rusLRName}${workNumber}_${last_name}${first_name:0:2}${father_name:0:2}_${group_number}_${in_group_order}.pdf"
+	if [[ ! -f "./report/$reportName" ]]; then
+		echo "Expected report with name ./solution/report/$reportName but it is not found!"
+		echo "Founded files $(ls ./report)"
 		return 1
 	fi
-	applicationName=$(ls ./report | grep -E "^Приложение${rusLRName}${workNumber}_[А-Я][а-я]*[А-Я][А-Я]_1[0-2][0-9]_([1-9]|[1-9][0-9]).pdf$")
-	if [[ -z "$repoName" ]]; then
-		echo "Report's application name not match required pattern like [Приложение${rusLRName}${workNumber}_ИвановИИ_125_12.pdf]"
-		echo "Or it not exist"
+	applicationName="Приложение${reportName}"
+	if [[ ! -f "./report/$applicationName" ]]; then
+		echo "Expected application with name ./solution/report/$reportName but it is not found!"
 		return 1
 	fi
 }
-doStep "Check report and application" checkReportAndApplications
+doStep "Проверка формата отчетов" checkReportAndApplications
 
 # step 3.1: copy report and application if COPY_DOCS = true
 copyDocs() {
@@ -191,7 +196,7 @@ copyDocs() {
 	fi
 }
 if [[ $COPY_DOCS ]]; then
-	doStep "Copy docs" copyDocs
+	doStep "Копирование отчетов" copyDocs
 fi
 
 # step 4: check for files outside solution folder
@@ -221,7 +226,7 @@ checkFilesOutsideSolutionDir() {
 	return 0
 }
 
-doStep "Check for files outside solution/ directory" checkFilesOutsideSolutionDir
+doStep "Проверка на отсутствие файлов вне solution/ папки" checkFilesOutsideSolutionDir
 
 # step 5: check Make build
 checkMakeBuild() {
@@ -249,5 +254,18 @@ checkMakeBuild() {
 
 	return 0
 }
-doStep "Build program" checkMakeBuild
+doStep "Сборка программы" checkMakeBuild
 
+
+# send work to checking queue if all steps passed done
+zmq_push() {
+	m=$(</dev/stdin)
+ 	echo -e $(printf '\\x01\\x00\\x%02xx%00s' $((1 + ${#m})) "$m") > /dev/tcp/$1/$2
+}
+
+sendWorkToQueue() {
+	local host="$CHECKING_QUEUE_UPDATER_HOST"
+	local port="$CHECKING_QUEUE_UPDATER_PORT"
+	echo "${workName}" | zmq_push "$host" "$port"
+}
+doStep "Отправка работы в очередь на финальную проверку" sendWorkToQueue

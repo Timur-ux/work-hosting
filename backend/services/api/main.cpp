@@ -1,4 +1,5 @@
 #include "components/authFactory.hpp"
+#include "components/checking_queue_updater.hpp"
 #include "components/workHolder.hpp"
 #include "generated/static_config.yaml.hpp"
 #include "handlers/get_checking_queue.hpp"
@@ -46,6 +47,7 @@ int main(int argc, const char *argw[]) {
 														.Append<GetMarksHandler>()
 														.Append<UserRoleHandler>()
 														.Append<HelloHandler>()
+														.Append<CheckingQueueUpdater>()
 														.Append<components::TestsuiteSupport>()
                             .Append<clients::dns::Component>();
   bool useInMemoryConfig = true;

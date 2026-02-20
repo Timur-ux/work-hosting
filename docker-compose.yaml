@@ -19,6 +19,7 @@ services:
       - backend-db
 
   api: 
+    restart: always
     build:
       context: .
       dockerfile: ./docker/api.dockerfile
@@ -49,12 +50,15 @@ services:
       - backend-db
 
   checker:
+    restart: always
     build:
       context: .
       dockerfile: ./docker/checker.dockerfile
     environment:
       CHECKER_ADDR: "tcp://checker:55555"
       LOG_PATH: "/logs/checker.log"
+      CHECKING_QUEUE_UPDATER_HOST: "${CHECKING_QUEUE_UPDATER_HOST:-api}"
+      CHECKING_QUEUE_UPDATER_PORT: "${CHECKING_QUEUE_UPDATER_PORT:-55555}"
     volumes:
       - "${STORAGE_PATH:-/tmp}/checker:/checker"
       - "${LOG_PATH:-/tmp}/checker:/logs"
@@ -65,6 +69,7 @@ services:
       - backend-checker
 
   web:
+    restart: always
     build:
       context: ./frontend/
     networks:
@@ -72,6 +77,7 @@ services:
       - backend-api
 
   nginx:
+    restart: always
     image: nginx:1.29.4
     ports:
       - "80:8080"

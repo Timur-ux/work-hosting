@@ -23,6 +23,7 @@ const Profile = () => {
     alert("Пока не реализовано");
   };
 
+	console.log(profile);
   return (
     <div className="my-10">
       <div className="text-xl grid gap-10 grid-cols-2 justify-between">

@@ -65,7 +65,7 @@ CREATE TABLE works (
 -- MARKS --
 
 CREATE TYPE MARK_TYPE AS ENUM ('0', '2', '3', '4', '5');
-CREATE TYPE WORK_PASS_STATUS AS ENUM ('null', 'cheking', 'rejected', 'accepted');
+CREATE TYPE WORK_PASS_STATUS AS ENUM ('null', 'checking', 'rejected', 'accepted');
 CREATE TABLE marks (
 	id SERIAL PRIMARY KEY,
 	student_id	INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
