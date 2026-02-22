@@ -1,12 +1,12 @@
 "use server";
 import { AxiosError } from "axios";
-import client, { DoRequest, Response } from "./client";
+import  { DoRequest, ResponseWrapper } from "./client";
 
 export type BearerToken = string;
 const LoginAndGetToken: (
   username: string,
   password: string,
-) => Promise<Response<BearerToken>> = async (
+) => Promise<ResponseWrapper<BearerToken>> = async (
   username: string,
   password: string,
 ) => {

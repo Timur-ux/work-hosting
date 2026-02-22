@@ -27,11 +27,13 @@ CheckingQueueUpdater::CheckingQueueUpdater(
               .GetCluster()) {
   std::string addr = config["listen-addr"].As<std::string>();
   int recieveTimeout = config["recieve-timeout-ms"].As<int>();
+	std::string taskProcessorName = config["task_processor"].As<std::string>();
+	auto& taskProcessor = context.GetTaskProcessor(taskProcessorName);
 
   listenSocket_.bind(addr);
   listenSocket_.set(::zmq::sockopt::rcvtimeo, recieveTimeout);
 
-  task_ = utils::Async("checking-queue-updater-func", [&db = db_,
+  task_ = utils::Async(taskProcessor, "checking-queue-updater-func", [&db = db_,
                                                        &socket =
                                                            listenSocket_]() {
     using namespace userver::server::handlers;
@@ -117,6 +119,9 @@ properties:
     minimum: 1000
     maximum: 10000
     description: awaiting delay in milliseconds for recieving messages(inpact on shutdown time)
+  task_processor:
+    type: string
+    description: name of task processor the checking-queue-updater-func will run on
 )");
 }
 } // namespace SERVICE_NAMESPACE

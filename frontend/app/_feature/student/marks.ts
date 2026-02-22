@@ -1,5 +1,5 @@
 "use server";
-import client, { DoRequest, Response } from "../client";
+import  { DoRequest, ResponseWrapper } from "../client";
 export type StudentMark = {
   work_type: "LR" | "KP";
   old_work_number: number;
@@ -9,7 +9,7 @@ export type StudentMark = {
 
 const GetStudentMarks: (
   bearer_token: string,
-) => Promise<Response<StudentMark[]>> = async (bearer_token: string) => {
+) => Promise<ResponseWrapper<StudentMark[]>> = async (bearer_token: string) => {
   const response = await DoRequest(
     "GET",
     "/student/marks",

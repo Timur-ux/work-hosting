@@ -1,6 +1,6 @@
 "use server";
 import { AxiosError } from "axios";
-import client, { DoRequest, Response } from "./client";
+import  { DoRequest, ResponseWrapper } from "./client";
 
 export type RegisterResult = "success";
 const Register: (
@@ -10,7 +10,7 @@ const Register: (
 	last_name: string,
 	father_name: string,
 	email: string
-) => Promise<Response<RegisterResult>> = async (
+) => Promise<ResponseWrapper<RegisterResult>> = async (
   username: string,
   password: string,
 	first_name: string,

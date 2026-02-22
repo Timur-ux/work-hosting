@@ -9,12 +9,18 @@
 #include "userver/storages/postgres/cluster_types.hpp"
 #include "userver/storages/postgres/component.hpp"
 #include "userver/storages/postgres/io/row_types.hpp"
+#include "userver/storages/redis/component.hpp"
+#include "userver/yaml_config/merge_schemas.hpp"
 #include "work.hpp"
 #include "work_hosting/sql_queries.hpp"
+#include <chrono>
+#include <fmt/core.h>
+#include <userver/components/component_config.hpp>
 #include <userver/components/component_context.hpp>
 #include <userver/formats/json/serialize_container.hpp>
 #include <userver/formats/json/value_builder.hpp>
 #include <userver/server/handlers/exceptions.hpp>
+#include <userver/storages/redis/client.hpp>
 
 namespace impl {
 Work workMap(const check::WorkRequest &requestBody,
@@ -37,7 +43,23 @@ SendWorkHandler::SendWorkHandler(
     : HttpHandlerJsonBase(config, context),
       workHolder_(context.FindComponent<WorkHolder>()),
       db_(context.FindComponent<userver::components::Postgres>("pg-database")
-              .GetCluster()) {}
+              .GetCluster()),
+      redis_(context.FindComponent<userver::components::Redis>("redis-cache")
+                 .GetClient("api_cache_db")) {
+  send_timeout_ms_ = config["send-timeout-ms"].As<long>();
+}
+
+userver::yaml_config::Schema SendWorkHandler::GetStaticConfigSchema() {
+  return userver::yaml_config::MergeSchemas<HttpHandlerJsonBase>(R"(
+type: object
+additionalProperties: false
+description: proxy for work in queue to check
+properties:
+  send-timeout-ms:
+    type: integer
+    description: timeout in milliseconds to send work from one student
+)");
+}
 
 SendWorkHandler::Value
 SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
@@ -51,6 +73,9 @@ SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
   const auto &username = context.GetData<std::string>("username");
   auto requestBody = request_json.As<check::WorkRequest>();
   ::Work work = ::impl::workMap(requestBody, username);
+
+	if(redis_->Get(username, redisCC_).Get().has_value())
+    throw ConflictError{ExternalBody{fmt::format("Wait for {} milliseconds since last send", send_timeout_ms_)}};
 
   auto res = db_->Execute(
       ClusterHostType::kSlave, sql::kIsQueueEntryExists, work.gvName(),
@@ -66,6 +91,7 @@ SendWorkHandler::HandleRequestJsonThrow(const HttpRequest &request,
                                      .father_name = student.father_name,
                                      .group_number = student.group_number,
                                      .in_group_order = student.in_group_order});
+	redis_->Set(username, "", std::chrono::milliseconds(send_timeout_ms_), redisCC_).IgnoreResult();
   return userver::formats::json::ValueBuilder{
       check::SendWorkResponse{"Ok, added to check queue"}}
       .ExtractValue();

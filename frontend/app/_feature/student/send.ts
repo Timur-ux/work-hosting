@@ -1,5 +1,5 @@
 "use server";
-import { DoRequest, Response } from "../client";
+import { DoRequest, ResponseWrapper } from "../client";
 export type WorkData = {
   work_type: "LR" | "KP";
   old_work_number: number;
@@ -8,7 +8,7 @@ export type WorkData = {
 const SendWork: (
   bearer_token: string,
   work: WorkData,
-) => Promise<Response<string>> = async (
+) => Promise<ResponseWrapper<string>> = async (
   bearer_token: string,
   work: WorkData,
 ) => {

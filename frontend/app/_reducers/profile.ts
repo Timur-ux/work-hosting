@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
-import client from "@/_feature/client";
 
 export interface StudentData {
   first_name: string;

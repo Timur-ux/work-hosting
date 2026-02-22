@@ -1,5 +1,5 @@
 "use server";
-import { DoRequest, Response } from "./client";
+import { DoRequest, ResponseWrapper } from "./client";
 
 export type QueuedWork = {
   gvName: string;
@@ -7,8 +7,9 @@ export type QueuedWork = {
   old_work_number: number;
 };
 
-const GetQueuedWorks: () => Promise<Response<QueuedWork[]>> = async () => {
+const GetQueuedWorks: () => Promise<ResponseWrapper<QueuedWork[]>> = async () => {
   return await DoRequest("GET", "/queue", null, null, (data) => {
+		console.log(data)
     return data.map((data: any) => {
       return {
         gvName: data["gv-name"],

@@ -50,6 +50,8 @@ components_manager:
       path: /send
       method: POST
       task_processor: main-task-processor
+      send-timeout-ms#env: SEND_TIMEOUT_MS
+      send-timeout-ms#fallback: 60000
       auth:
         types:
           - bearer
@@ -127,6 +129,7 @@ components_manager:
           - hello
 
     checking-queue-updater:
+      task_processor: main-task-processor
       listen-addr#env: CHECKING_QUEUE_UPDATER_LISTEN_ADDR
       listen-addr#fallback: tcp://*:55555
       recieve-timeout-ms#env: CHECKING_QUEUE_UPDATER_TIMEOUT_MS

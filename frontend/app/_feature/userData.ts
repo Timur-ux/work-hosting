@@ -1,6 +1,6 @@
 "use server";
 import { ProfileData, StudentData } from "@/_reducers/profile";
-import { CastResponse, DoRequest, IsValidResponse, Response } from "./client";
+import { CastResponse, DoRequest, IsValidResponse, ResponseWrapper } from "./client";
 import GetUserRole from "./role";
 
 const nullStudentData: any = {
@@ -14,7 +14,7 @@ const nullStudentData: any = {
 
 const GetStudentData: (
   bearer_token: string,
-) => Promise<Response<StudentData>> = async (bearer_token: string) => {
+) => Promise<ResponseWrapper<StudentData>> = async (bearer_token: string) => {
   const response = await DoRequest(
     "GET",
     "/student/profile",
@@ -28,7 +28,7 @@ const GetStudentData: (
 const GetUserData: (
   bearer_token: string,
   username: string,
-) => Promise<Response<ProfileData>> = async (
+) => Promise<ResponseWrapper<ProfileData>> = async (
   bearer_token: string,
   username: string,
 ) => {

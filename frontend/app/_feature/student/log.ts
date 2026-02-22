@@ -1,5 +1,5 @@
 "use server";
-import { Response } from "../client";
+import { ResponseWrapper } from "../client";
 type WorkData = {
   work_type: "LR" | "KP";
   old_work_number: number;
@@ -8,7 +8,7 @@ type WorkData = {
 const GetLog: (
   username: string,
   work: WorkData,
-) => Promise<Response<string>> = async (username: string, work: WorkData) => {
+) => Promise<ResponseWrapper<string>> = async (username: string, work: WorkData) => {
   const uri = `http://localhost/logs/${work.work_type}${work.old_work_number}-${username}.log`;
   try {
     const response = await fetch(uri);
@@ -22,7 +22,7 @@ const GetLog: (
       error: e,
       uri: uri,
       payload: null,
-    } as Response<string>;
+    } as ResponseWrapper<string>;
   }
 };
 

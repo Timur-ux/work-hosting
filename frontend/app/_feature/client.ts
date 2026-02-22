@@ -1,65 +1,50 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
+const getBaseUrl = () => {
+  return "http://api:8080";
+  // return "http://localhost:80/api";
+};
 
-const client = axios.create({
-  baseURL: "http://localhost:80/api",
-});
-
-client.interceptors.request.use(
-  (value) => {
-    console.log("Request url: ", value.url);
-    return value;
-  },
-  (error) => error,
-);
-
-client.interceptors.response.use(
-  (value) => value,
-  (error) => {
-    console.log("INTERCEPTED ERROR");
-		console.log("Is axios error: ", error.isAxiosError)
-		console.log("response code: ", error.response?.data?.code)
-		console.log("response message: ", error.response?.data?.message)
-		console.log("Cause: ", error.cause)
-    if (error.isAxiosError)
-      return {
-        status: error.response?.data?.code,
-        message: error.response?.data?.message || error.cause?.code,
-      };
-    return error;
-  },
-);
+const baseUrl = getBaseUrl();
 
 export type RequestError = {
   status: number;
   message: string;
 };
 
-export type Response<T> = {
+export type ResponseWrapper<T> = {
   uri: string | null;
   payload: T | null;
   error: RequestError | null;
 };
 
 const Get = async (uri: string, token: string | null) => {
-  if (token == null) return await client.get(uri);
+	console.log(baseUrl + uri, process.env.DEV)
+  if (token == null)
+    return await fetch(baseUrl + uri, {
+      cache: "no-store",
+    });
 
-  return await client.get(uri, {
+  return await fetch(baseUrl + uri, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
   });
 };
 
 const Post = async (uri: string, token: string | null, data: any) => {
-  if (token == null) return await client.post(uri, data);
+  if (token == null)
+    return await fetch(baseUrl + uri, {
+      body: data,
+    });
 
-  return await client.post(uri, data, {
+  return await fetch(baseUrl + uri, {
     headers: { Authorization: `Bearer ${token}` },
+    body: data,
   });
 };
 
 const Delete = async (uri: string, token: string | null) => {
-  if (token == null) return await client.delete(uri);
+  if (token == null) return await fetch(baseUrl + uri);
 
-  return await client.delete(uri, {
+  return await fetch(uri, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -72,52 +57,51 @@ export const DoRequest = async <T extends unknown>(
   mapper: (data: any) => T,
 ) => {
   try {
-    let response: AxiosResponse<any, any, {}> | any = null;
+    let response: Response | null = null;
     if (method == "GET") response = await Get(uri, token);
     else if (method == "POST") response = await Post(uri, token, data);
     else if (method == "DELETE") response = await Delete(uri, token);
     else throw "Undefined Method!";
 
     if (Math.floor(response.status / 100) != 2) {
-			console.log("RESPONSE STATUS NOT 2xx: ", response)
+      console.log("RESPONSE STATUS NOT 2xx: ", response);
       return {
         uri: uri,
         payload: null,
         error: {
           status: response.status,
-          message: response.message,
+          message: await response.text(),
         },
-      } as Response<T>;
+      } as ResponseWrapper<T>;
     }
 
-    const result = mapper(response.data);
+    const result = mapper(await response.json());
     return {
       uri: uri,
       payload: result,
       error: null,
-    } as Response<T>;
+    } as ResponseWrapper<T>;
   } catch (e) {
     const error = e as RequestError;
-		console.log("CATCHED ERROR: ", error)
+    console.log("CATCHED ERROR: ", error);
     return {
       payload: null,
       uri: uri,
       error: error,
-    } as Response<T>;
+    } as ResponseWrapper<T>;
   }
 };
 
-export const IsValidResponse = <T extends unknown>(response: Response<T>) =>
-  response.payload !== null && response.error == null;
+export const IsValidResponse = <T extends unknown>(
+  response: ResponseWrapper<T>,
+) => response.payload !== null && response.error == null;
 
 export const CastResponse = <From extends unknown, To extends unknown>(
-  response: Response<From>,
+  response: ResponseWrapper<From>,
 ) => {
   return {
     uri: response.uri,
     payload: null,
     error: response.error,
-  } as Response<To>;
+  } as ResponseWrapper<To>;
 };
-
-export default client;
