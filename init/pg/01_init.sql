@@ -74,6 +74,21 @@ CREATE TABLE marks (
 	status WORK_PASS_STATUS NOT NULL DEFAULT 'null'
 );
 
+-- accepted works history
+CREATE TABLE accepted_works (
+	id SERIAL PRIMARY KEY,
+	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- rejected works history
+CREATE TABLE rejected_works (
+	id SERIAL PRIMARY KEY,
+	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
 
 -- CHECK QUEUE --
 
