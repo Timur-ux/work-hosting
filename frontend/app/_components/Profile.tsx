@@ -35,38 +35,6 @@ const Profile = ({
   const [anchorElement, setAnchorElement] = React.useState<null | HTMLElement>(
     null,
   );
-  async function checkToken() {
-    if (typeof localStorage == "undefined") 
-			return;
-		const token = localStorage.getItem("bearer-token");
-		const username = localStorage.getItem("username")
-		if (token == null) {
-			console.log('auth token not found in local storage');
-			return;
-		}
-		if(username == null) {
-			console.log('auth token found in local storage but username not set');
-			return;
-		}
-		
-		console.log("Found auth token in local storage, trying to auth");
-		const response = await GetUserData(token, username);
-    if (!IsValidResponse(response)) {
-			if(response.error?.status == 401) 
-				console.log("token expired, remove it from local storage")
-			 else 
-				console.log("Undefined error while trying fetch user data by token stored in local storage, removing it");
-			
-				localStorage.removeItem("bearer-token");
-				localStorage.removeItem("username");
-      return;
-    }
-    dispatch(login({ profile: response.payload as ProfileData }));
-  }
-
-  useEffect(() => {
-    checkToken();
-  }, []);
 
   if (!loggedIn) {
     return (
