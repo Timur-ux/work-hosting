@@ -1,5 +1,4 @@
 "use server";
-import { AxiosError } from "axios";
 import  { DoRequest, ResponseWrapper } from "./client";
 
 export type BearerToken = string;
@@ -13,7 +12,7 @@ const LoginAndGetToken: (
 	const token = await DoRequest<BearerToken>("POST", "/login", null, {
       username: username,
       password: password,
-    }, (data) => data["bearer-token"]);
+    }, (data) => JSON.parse(data)["bearer-token"]);
 
 	return token;
 };

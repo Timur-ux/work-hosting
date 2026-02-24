@@ -61,7 +61,7 @@ RETURNS TRIGGER AS $$
 BEGIN
 	UPDATE marks
 	SET status=TG_ARGV[0]::work_pass_status
-	WHERE work_id=NEW.work_id;
+	WHERE work_id=NEW.work_id AND student_id=NEW.student_id;
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

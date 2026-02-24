@@ -8,7 +8,8 @@ export type QueuedWork = {
 };
 
 const GetQueuedWorks: () => Promise<ResponseWrapper<QueuedWork[]>> = async () => {
-  return await DoRequest("GET", "/queue", null, null, (data) => {
+  return await DoRequest("GET", "/queue", null, null, (d) => {
+		const data = JSON.parse(d);
 		console.log(data)
     return data.map((data: any) => {
       return {

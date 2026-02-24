@@ -109,7 +109,8 @@ const Profile = ({
     menuOpts.push({ href: "/student/send", text: "Отправить работу" });
     menuOpts.push({ href: "/student/logs", text: "Отчет о проверке" });
   } else if (profile.role == "admin") {
-    menuOpts.push({ href: "/admin/dashboard", text: "Мониторинг" });
+    menuOpts.push({ href: "/admin/work/add", text: "Добавить работу" });
+    menuOpts.push({ href: "/admin/work/check", text: "Проверить работы" });
   }
   menuOpts.push({ href: "/logout", text: "Выйти из профиля" });
 

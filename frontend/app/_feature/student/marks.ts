@@ -15,7 +15,8 @@ const GetStudentMarks: (
     "/student/marks",
     bearer_token,
     null,
-    (data) => {
+    (d) => {
+			const data = JSON.parse(d)
       if (!Array.isArray(data))
         console.log("Undefined result type! Expected array. Data: ", data);
       const result: StudentMark[] = data.map((value: any) => {

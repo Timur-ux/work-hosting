@@ -1,0 +1,19 @@
+components:
+  schemas:
+    PopQueueRequestBody:
+      type: object
+      additionalProperties: false
+      properties:
+        gv-name:
+          type: string
+        work-type:
+          type: string
+        old-work-number:
+          type: number
+          x-usrv-cpp-type: std::int32_t
+          minimum: 0
+          maximum: 65535
+      required:
+        - gv-name
+        - work-type
+        - old-work-number

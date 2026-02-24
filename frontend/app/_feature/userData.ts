@@ -20,7 +20,7 @@ const GetStudentData: (
     "/student/profile",
     bearer_token,
     null,
-    (data) => data,
+    (data) => JSON.parse(data),
   );
   return response;
 };

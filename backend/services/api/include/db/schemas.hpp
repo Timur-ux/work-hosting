@@ -46,6 +46,7 @@ struct Work {
 };
 
 struct CheckingQueueItem {
+	std::int64_t queue_id;
   std::string gv_name;
   WorkType work_type;
   std::int32_t old_work_number;

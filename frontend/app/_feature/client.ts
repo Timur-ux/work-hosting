@@ -1,6 +1,6 @@
 const getBaseUrl = () => {
-  return "http://api:8080";
-  // return "http://localhost:80/api";
+  // return "http://api:8080";
+  return "http://localhost:80/api";
 };
 
 const baseUrl = getBaseUrl();
@@ -17,14 +17,15 @@ export type ResponseWrapper<T> = {
 };
 
 const Get = async (uri: string, token: string | null) => {
-	console.log(baseUrl + uri, process.env.DEV)
   if (token == null)
     return await fetch(baseUrl + uri, {
+      method: "GET",
       cache: "no-store",
     });
 
   return await fetch(baseUrl + uri, {
     headers: { Authorization: `Bearer ${token}` },
+    method: "GET",
     cache: "no-store",
   });
 };
@@ -32,20 +33,23 @@ const Get = async (uri: string, token: string | null) => {
 const Post = async (uri: string, token: string | null, data: any) => {
   if (token == null)
     return await fetch(baseUrl + uri, {
-      body: data,
+      method: "POST",
+      body: JSON.stringify(data),
     });
 
   return await fetch(baseUrl + uri, {
+    method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: data,
   });
 };
 
 const Delete = async (uri: string, token: string | null) => {
-  if (token == null) return await fetch(baseUrl + uri);
+  if (token == null) return await fetch(baseUrl + uri, { method: "DELETE" });
 
   return await fetch(uri, {
     headers: { Authorization: `Bearer ${token}` },
+    method: "DELETE",
   });
 };
 
@@ -75,7 +79,9 @@ export const DoRequest = async <T extends unknown>(
       } as ResponseWrapper<T>;
     }
 
-    const result = mapper(await response.json());
+		const text  = await response.text();
+		console.log(text)
+    const result = mapper(text);
     return {
       uri: uri,
       payload: result,
@@ -83,6 +89,7 @@ export const DoRequest = async <T extends unknown>(
     } as ResponseWrapper<T>;
   } catch (e) {
     const error = e as RequestError;
+    console.log("Uri: ", uri, "Method:", method);
     console.log("CATCHED ERROR: ", error);
     return {
       payload: null,

@@ -1,5 +1,4 @@
 "use server";
-import { AxiosError } from "axios";
 import  { DoRequest, ResponseWrapper } from "./client";
 
 export type RegisterResult = "success";

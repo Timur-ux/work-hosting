@@ -96,7 +96,7 @@ components_manager:
 
     pop-checking-queue-handler:
       path: /admin/queue
-      method: DELETE
+      method: POST
       task_processor: main-task-processor
       auth:
         types:

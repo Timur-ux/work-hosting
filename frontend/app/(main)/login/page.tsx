@@ -44,6 +44,7 @@ const Login = () => {
       return;
     }
     const response1 = await LoginAndGetToken(username, password);
+		console.log("R1")
     if (!IsValidResponse(response1)) {
       setError({
         status: response1.error?.status as number,
