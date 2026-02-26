@@ -1,14 +1,13 @@
 components:
   schemas:
-    RegisterResponseBody:
+    RegisterRequestBody:
       type: object
       additionalProperties: false
       properties:
         gv-name:
           type: string
-        group:
-          type: integer
-          minimum: 1
+          minLength: 3
+          maxLength: 60
         first-name:
           type: string
           minLength: 1
@@ -27,10 +26,18 @@ components:
           maxLength: 128
         password:
           type: string
-          minLength: 8
+          minLength: 5
+      required:
+        - gv-name
+        - first-name
+        - last-name
+        - father-name
+        - email
+        - password
 
 
-    RegisterRequestBody:
+
+    RegisterResponseBody:
       type: object
       additionalProperties: false
       properties:

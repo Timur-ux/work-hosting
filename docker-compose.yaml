@@ -1,43 +1,64 @@
 services:
-  # postgres:
-  #   image: postgres:latest
-  #   restart: always
-  #   environment:
-  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
-  #     POSTGRES_USER: "${POSTGRES_USER:-admin}"
-  #     POSTGRES_DB: "workHosting"
-  #   volumes:
-  #     - "./init/pg:/docker-entrypoint-initdb.d:ro"
-  #     - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
-  #   networks:
-  #     - backend-1
+  postgres: &postgres
+    image: postgres:18
+    restart: always
+    environment: &postgres-env
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-qwerty}"
+      POSTGRES_USER: "${POSTGRES_USER:-admin}"
+      POSTGRES_DB: "${POSTGRES_DB:-workHosting}"
+    volumes: &postgres-volumes
+      - "./init/pg:/docker-entrypoint-initdb.d:ro"
+      - "${STORAGE_PATH:-/tmp}/postgres:/var/lib/postgresql"
+    networks:
+      - backend-db
 
-  api:
+  redis:
+    image: redis:8.4.0
+    restart: always
+    networks:
+      - backend-db
+
+  api: 
+    restart: always
     build:
       context: .
       dockerfile: ./docker/api.dockerfile
-    environment:
+    environment: &api-env
       CHECKER_ADDR: "tcp://checker:55555"
-    volumes:
+      TOKEN_TTL: "3600000" # 1 hour 
+      POSTGRES_DB_CONNECTION: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-qwerty}@postgres:5432/workHosting"
+      ADMIN_USERNAME: "${ADMIN_USERNAME}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+    volumes: &api-volumes
       - "${LOG_PATH:-/tmp}/api/:/logs/"
-    ports:
-      - "8080:8080"
-    security_opt:
+      - "./backend/services/api/static_config.yaml:/static_config/static_config.yaml"
+      - "./cfg/secure_data.json:/etc/api/secure_data.json"
+    entrypoint:
+      - /app/api
+      - --config
+      - /static_config/static_config.yaml
+    security_opt: &api-security
       - seccomp=unconfined
-    depends_on:
+    depends_on: &api-depends
       - checker
-      # - postgresql
-    networks:
-      - backend-1
-      - backend-2
+      - postgres
+      - redis
+    networks: &api-networks
+      - frontend
+      - backend-api
+      - backend-checker
+      - backend-db
 
   checker:
+    restart: always
     build:
       context: .
       dockerfile: ./docker/checker.dockerfile
     environment:
       CHECKER_ADDR: "tcp://checker:55555"
       LOG_PATH: "/logs/checker.log"
+      CHECKING_QUEUE_UPDATER_HOST: "${CHECKING_QUEUE_UPDATER_HOST:-api}"
+      CHECKING_QUEUE_UPDATER_PORT: "${CHECKING_QUEUE_UPDATER_PORT:-55555}"
     volumes:
       - "${STORAGE_PATH:-/tmp}/checker:/checker"
       - "${LOG_PATH:-/tmp}/checker:/logs"
@@ -45,11 +66,75 @@ services:
       - "./backend/scripts:/scripts"
       - "./init/checker/init.sh:/init.sh"
     networks:
-      - backend-2
+      - backend-checker
+
+  web:
+    restart: always
+    build:
+      context: ./frontend/
+    networks:
+      - frontend
+      - backend-api
+
+  nginx:
+    restart: always
+    image: nginx:1.29.4
+    ports:
+      - "80:8080"
+    volumes:
+      - "./cfg/nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "${LOG_PATH:-/tmp}/nginx:/var/log/nginx"
+      - "${STORAGE_PATH:-/tmp}/checker:/checker"
+    depends_on:
+      - api
+      - web
+    networks:
+      - frontend
+      - backend-api
+
+  redis-test:
+    hostname: redis
+    domainname: redis
+    image: redis:8.4.0
+    restart: always
+    ports:
+      - "26379:6379"
+    networks: 
+      - tests
+
+  postgres-test: 
+    hostname: postgres
+    image: postgres:18
+    restart: always
+    environment: *postgres-env
+    volumes: *postgres-volumes
+    networks: 
+      - tests
+
+  api-test:
+    build:
+      context: .
+      dockerfile: ./docker/api-test.dockerfile
+    environment: *api-env
+    volumes: *api-volumes
+    security_opt: *api-security
+    depends_on: 
+      - postgres-test
+      - redis-test
+    networks: 
+      - tests
 
 networks:
-  backend-1:
+  tests:
+    driver: bridge
+  backend-api:
     driver: bridge
 
-  backend-2:
+  backend-checker:
+    driver: bridge
+  
+  backend-db:
+    driver: bridge
+
+  frontend:
     driver: bridge

@@ -1,17 +1,19 @@
-FROM ubuntu:24.04 AS builder
+FROM ghcr.io/userver-framework/ubuntu-24.04-userver:v2.14 AS generator
 
-COPY ./backend/third_party/userver/scripts/docs/en/deps/ubuntu-24.04.md /userver_tmp/
-COPY ./backend/third_party/userver/scripts/postgres/ubuntu-install-postgresql-includes.sh /userver_tmp/
+# install zeromq and cppzmq wrapper
+RUN apt install -y libzmq5 cppzmq-dev
 
-RUN apt update \
-  && apt install -y $(cat /userver_tmp/ubuntu-24.04.md) \
-  && apt install -y clang-format python3-pip \
-  && apt install -y \
-    postgresql-16 \
-    redis-server \
-  && apt install -y locales \
-  && apt clean all \
-  && /userver_tmp/ubuntu-install-postgresql-includes.sh
+WORKDIR /app
+
+# copy only trdparty and cmake
+COPY ./backend/CMakeLists.txt ./backend/Makefile ./
+COPY ./backend/third_party ./third_party
+
+# build trdparty libs and remove cache
+RUN make trdparty-only
+RUN rm ./build-release/CMakeCache.txt
+
+FROM generator AS builder
 
 WORKDIR /app
 COPY ./backend .

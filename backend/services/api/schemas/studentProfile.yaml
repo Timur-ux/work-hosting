@@ -1,0 +1,29 @@
+components:
+  schemas:
+    GetStudentProfileResponseBody:
+      type: object
+      additionalProperties: false
+      properties:
+        gv-name:
+          type: string
+          minLength: 3
+        first-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        last-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        father-name:
+          type: string
+          minLength: 1
+          maxLength: 30
+        email:
+          type: string
+          minLength: 1
+          maxLength: 128
+        group-number:
+          type: integer
+        in-group-order:
+          type: integer

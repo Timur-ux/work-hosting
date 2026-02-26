@@ -1,5 +1,150 @@
 #include "handlers/register.hpp"
+#include "db/CustomTypesMapping.hpp"
+#include "db/schemas.hpp"
+#include "schemas/registration.hpp"
+#include "userver/components/component_context.hpp"
+#include "userver/formats/json/value_builder.hpp"
+#include "userver/http/content_type.hpp"
+#include "userver/logging/log.hpp"
+#include "userver/server/handlers/exceptions.hpp"
+#include "userver/server/handlers/http_handler_json_base.hpp"
+#include "userver/server/http/http_status.hpp"
+#include "userver/storages/postgres/cluster.hpp"
+#include "userver/storages/postgres/cluster_types.hpp"
+#include "userver/storages/postgres/component.hpp"
+#include "userver/storages/postgres/io/row_types.hpp"
+#include "userver/yaml_config/merge_schemas.hpp"
+#include "utils.hpp"
+#include "work_hosting/sql_queries.hpp"
+#include <cryptopp/sha.h>
+#include <cstdlib>
+#include <fmt/compile.h>
+#include <fmt/core.h>
+#include <stdexcept>
+#include <userver/formats/serialize/common_containers.hpp>
+#include "userver/components/component_config.hpp"
 
 namespace SERVICE_NAMESPACE {
+RegisterHandler::RegisterHandler(
+    const components::ComponentConfig &config,
+    const components::ComponentContext &component_context)
+    : HttpHandlerJsonBase(config, component_context),
+      db_(component_context.FindComponent<components::Postgres>("pg-database")
+              .GetCluster()) {
+  std::string adminUsername = config["admin-username"].As<std::string>();
+  std::string adminPassword = config["admin-password"].As<std::string>();
 
+  std::string passwordHash = utils::hash(adminPassword);
+
+  auto transaction = db_->Begin(
+      "check-admin", storages::postgres::ClusterHostType::kMaster, {});
+  auto res = transaction.Execute(sql::kFindUser, adminUsername);
+  if (res.Size() == 0) {
+    LOG_INFO() << "Admin user not found so i insert new";
+    res = transaction.Execute(sql::kInsertUser, adminUsername, passwordHash,
+                              UserRole::kAdmin);
+    if (res.RowsAffected()) {
+      transaction.Commit();
+      LOG_INFO() << "Admin with username: " << adminUsername
+                 << " successfully inserted";
+      return;
+    }
+    LOG_ERROR() << "Admin with username: " << adminUsername
+                << " can't be inserted to db!";
+    return;
+  }
+  auto user = res.AsSingleRow<User>(storages::postgres::kRowTag);
+  if (user.password_hash == passwordHash && user.role == UserRole::kAdmin) {
+    LOG_INFO() << "Same admin user already exists in db";
+    return;
+  }
+
+  res = transaction.Execute(sql::kUpdateAdmin, passwordHash, user.id);
+  if (res.RowsAffected()) {
+    transaction.Commit();
+    LOG_INFO() << "Admin with username: " << adminUsername
+               << " and id: " << user.id
+               << " successfully updated to new password";
+    return;
+  }
+  LOG_ERROR() << "Admin with username: " << adminUsername
+              << " and id: " << user.id << " can't be updated to new password!";
+  return;
+}
+yaml_config::Schema RegisterHandler::GetStaticConfigSchema() {
+  return yaml_config::MergeSchemas<server::handlers::HttpHandlerJsonBase>(R"(
+type: object
+description: register new users and admin user
+additionalProperties: false
+properties:
+  admin-username:
+    type: string
+    description: admin username
+  admin-password:
+    type: string
+    description: admin password
+)");
+}
+
+RegisterHandler::Value
+RegisterHandler::HandleRequestJsonThrow(const HttpRequest &request,
+                                        const Value &request_json,
+                                        RequestContext &context) const {
+  request.GetHttpResponse().SetContentType(
+      http::content_type::kApplicationJson);
+  auto body = request_json.As<registration::RegisterRequestBody>();
+  auto transaction =
+      db_->Begin("register", storages::postgres::ClusterHostType::kMaster, {});
+
+  auto res = transaction.Execute(sql::kIsUserExists, body.gv_name);
+  if (res.AsSingleRow<bool>())
+    throw server::handlers::ConflictError(
+        ExternalBody{"Student with given git verse name already exists"});
+
+  std::string passwordHash = utils::hash(body.password);
+
+  res = transaction.Execute(sql::kInsertUser, body.gv_name, passwordHash,
+                            UserRole::kStudent);
+  if (!res.RowsAffected())
+    throw server::handlers::InternalServerError(ExternalBody{fmt::format(
+        "Unable insert user to db. Can't insert user with username [{}] to db",
+        body.gv_name)});
+
+  res = transaction.Execute(sql::kFindStudentBase, body.first_name,
+                            body.last_name);
+
+  if (res.Size() == 0)
+    throw server::handlers::ResourceNotFound(
+        ExternalBody{fmt::format("Student with first name: [{}] and last name "
+                                 "[{}] not found in student db",
+                                 body.first_name, body.last_name)});
+
+  auto userBase = res.AsSingleRow<UserBase>(storages::postgres::kRowTag);
+
+  res = transaction.Execute(sql::kFindUser, body.gv_name);
+
+  if (res.Size() != 1)
+    throw server::handlers::InternalServerError(ExternalBody{fmt::format(
+        "Unable find proper user in db. Expected to find 1, but found {}",
+        res.Size())});
+
+  auto user = res.AsSingleRow<User>(storages::postgres::kRowTag);
+
+  res = transaction.Execute(sql::kInsertStudent, user.id, body.gv_name,
+                            userBase.group_number, userBase.in_group_order,
+                            body.first_name, body.last_name, body.father_name, body.email);
+  if (res.RowsAffected()) {
+    transaction.Commit();
+    request.SetResponseStatus(server::http::HttpStatus::kCreated);
+    return formats::json::ValueBuilder{
+        registration::RegisterResponseBody{
+            "success",
+            fmt::format("Registered user with username: {}", body.gv_name)}}
+        .ExtractValue();
+  }
+
+  transaction.Rollback();
+  throw server::handlers::InternalServerError{
+      ExternalBody{"User can't be inserted to db -\\_(-_-)/-"}};
+}
 } // namespace SERVICE_NAMESPACE

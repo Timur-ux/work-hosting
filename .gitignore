@@ -1,9 +1,12 @@
-**/tags
-**/.cache
-**/build-release
-**/build-debug
+tags
+.cache
+build-release
+build-debug
 compile_commands.json
+.pytest_cache
+pyrightconfig.json
 .env
+__pycache__
 
 # Prerequisites
 *.d

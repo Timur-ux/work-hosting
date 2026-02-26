@@ -12,7 +12,7 @@ class Work {
 public:
   enum class Type { LR, KP };
 
-	Work() = delete;
+	Work() = default;
 	Work(Type type, unsigned short number, const std::string &gvName);
 
   Type type() const;

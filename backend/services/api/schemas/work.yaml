@@ -1,0 +1,16 @@
+components:
+  schemas:
+    WorksArray:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          work-number:
+            type: integer
+          old-work-number:
+            type: integer
+          work-type:
+            type: string
+          theme:
+            type: string

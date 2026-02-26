@@ -1,16 +1,35 @@
--- STUDENTS --
-CREATE TABLE students (
+SET TIME ZONE 'Europe/Moscow';
+
+CREATE TYPE ROLE AS ENUM('student', 'admin');
+
+CREATE TABLE users (
 	id						SERIAL PRIMARY KEY,
-	gv_name				VARCHAR(60) NOT NULL UNIQUE,
-	group					INTEGER NOT NULL,
+	username			VARCHAR(60) NOT NULL UNIQUE,
+	password_hash VARCHAR(128) NOT NULL,
+	role					ROLE NOT NULL,
+	created_at		TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- STUDENTS --
+CREATE TABLE student_bases (
+	id SERIAL PRIMARY KEY,
 	first_name		VARCHAR(30) NOT NULL,
 	last_name			VARCHAR(30) NOT NULL,
-	father_name		VARCHAR(30) NOT NULL,
-	initials			VARCHAR(2)  NOT NULL,
+	group_number	INTEGER NOT NULL,
+	in_group_order INTEGER NOT NULL
+);
+
+CREATE TABLE students (
+	id						SERIAL PRIMARY KEY,
+	user_id				INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	gv_name				VARCHAR(60) NOT NULL UNIQUE,
+	group_number	INTEGER NOT NULL,
+	in_group_order INTEGER NOT NULL,
+	first_name		VARCHAR(50) NOT NULL,
+	last_name			VARCHAR(50) NOT NULL,
+	father_name		VARCHAR(50) NOT NULL,
 	email					VARCHAR(128) NOT NULL,
-	password_hash VARCHAR(64) NOT NULL UNIQUE,
-	created_at		TIMESTAMP NOT NULL DEFAULT NOW(),
-	updated_at		TIMESTAMP NOT NULL
+	updated_at		TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE students_update_history (
@@ -19,34 +38,34 @@ CREATE TABLE students_update_history (
 	field					VARCHAR(20) NOT NULL,
 	old_value			VARCHAR(128),
 	new_value			VARCHAR(128) NOT NULL,
-	update_time		TIMESTAMP NOT NULL DEFAULT NOW()
+	update_time		TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TYPE ACTION_TYPE AS ENUM('register', 'login', 'update_profile', 'send_work_to_check', 'send_message');
 
 CREATE TABLE students_actions (
 	id					SERIAL PRIMARY KEY,
-	student_id	INTEGER NOT NULL,
+	user_id	INTEGER NOT NULL,
 	action			ACTION_TYPE NOT NULL
 );
 
 -- WORKS --
 
-CREATE TYPE WORK_TYPE AS ENUM ('LR', 'KP');
+CREATE TYPE work_type_enum AS ENUM ('LR', 'KP');
 
 CREATE TABLE works (
 	id							SERIAL PRIMARY KEY,
 	work_number			INTEGER NOT NULL,
 	old_work_number INTEGER NOT NULL,
-	work_type				WORK_TYPE NOT NULL,
+	work_type				work_type_enum NOT NULL,
 	theme						TEXT NOT NULL,
-	created_at			TIMESTAMP NOT NULL DEFAULT NOW()
+	created_at			TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- MARKS --
 
 CREATE TYPE MARK_TYPE AS ENUM ('0', '2', '3', '4', '5');
-CREATE TYPE WORK_PASS_STATUS AS ENUM ('null', 'cheking', 'rejected', 'accepted');
+CREATE TYPE WORK_PASS_STATUS AS ENUM ('null', 'checking', 'rejected', 'accepted');
 CREATE TABLE marks (
 	id SERIAL PRIMARY KEY,
 	student_id	INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -55,23 +74,38 @@ CREATE TABLE marks (
 	status WORK_PASS_STATUS NOT NULL DEFAULT 'null'
 );
 
-
 -- CHECK QUEUE --
 
 CREATE TABLE checking_queue (
 	id SERIAL PRIMARY KEY,
 	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
 	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
-	commit_hash VARCHAR(20),
-	created_at TIMESTAMP DEFAULT NOW() NOT NULL
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
+
+-- accepted works history
+CREATE TABLE accepted_works (
+	id SERIAL PRIMARY KEY,
+	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- rejected works history
+CREATE TABLE rejected_works (
+	id SERIAL PRIMARY KEY,
+	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 
 -- MESSAGES --
 
 CREATE TABLE messages (
 	id SERIAL PRIMARY KEY,
 	sender_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-	reciever INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	reciever_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
 	message TEXT NOT NULL
 );
 
@@ -84,7 +118,7 @@ CREATE TABLE file_quotes (
 
 	file_path TEXT NOT NULL,
 	line_number INTEGER	NOT NULL,
-	created_at TIMESTAMP DEFAULT NOW() NOT NULL
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 -- CHECK HISTORY --
@@ -95,7 +129,7 @@ CREATE TABLE check_history (
 	id SERIAL PRIMARY KEY,
 	student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
 	work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
-	time TIMESTAMP DEFAULT NOW() NOT NULL,
+	time TIMESTAMPTZ DEFAULT NOW() NOT NULL,
 	text TEXT NOT NULL,
 	check_status CHECK_RESULT NOT NULL
 );
@@ -114,7 +148,6 @@ CREATE TABLE notifications (
 	message TEXT NOT NULL,
 	checked BOOLEAN DEFAULT FALSE NOT NULL,
 
-	created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-	checked_at TIMESTAMP DEFAULT NULL
+	created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+	checked_at TIMESTAMPTZ DEFAULT NULL
 );
-

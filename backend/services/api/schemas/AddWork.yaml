@@ -1,0 +1,18 @@
+components:
+  schemas:
+    AddWorkRequestBody:
+      type: object
+      additionalProperties: false
+      properties:
+        work-type:
+          type: string
+        old-work-number:
+          type: number
+          x-usrv-cpp-type: std::int32_t
+          minimum: 1
+        theme:
+          type: string
+
+      required:
+        - work-type
+        - old-work-number
