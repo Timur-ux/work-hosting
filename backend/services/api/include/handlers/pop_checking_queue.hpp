@@ -26,10 +26,6 @@ public:
                                  RequestContext &context) const override;
 
 private:
-	using QueueEntryId = std::int64_t;
-  void AcceptWork(const CheckingQueueItem &queuedWork, storages::postgres::Transaction &tr) const;
-  void RejectWork(const CheckingQueueItem &queuedWork, storages::postgres::Transaction &tr) const;
-  void RequeueWork(const CheckingQueueItem &queuedWork, storages::postgres::Transaction &tr) const;
   storages::postgres::ClusterPtr db_;
 };
 } // namespace SERVICE_NAMESPACE

@@ -1,5 +1,5 @@
 CREATE VIEW denormalized_checking_queue AS
-SELECT t1.id, t1.gv_name, t2.work_type, t2.old_work_number
+SELECT t0.id as queue_id, t1.gv_name, t2.work_type, t2.old_work_number
 FROM checking_queue AS t0
 INNER JOIN students AS t1 ON t0.student_id = t1.id
 INNER JOIN works AS t2 ON t0.work_id = t2.id

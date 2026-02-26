@@ -40,7 +40,7 @@ const Post = async (uri: string, token: string | null, data: any) => {
   return await fetch(baseUrl + uri, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    body: data,
+    body: JSON.stringify(data),
   });
 };
 
@@ -74,13 +74,12 @@ export const DoRequest = async <T extends unknown>(
         payload: null,
         error: {
           status: response.status,
-          message: await response.text(),
+          message: response.statusText + ": " + await response.text(),
         },
       } as ResponseWrapper<T>;
     }
 
 		const text  = await response.text();
-		console.log(text)
     const result = mapper(text);
     return {
       uri: uri,
@@ -88,13 +87,16 @@ export const DoRequest = async <T extends unknown>(
       error: null,
     } as ResponseWrapper<T>;
   } catch (e) {
-    const error = e as RequestError;
+    const error = e as Error;
     console.log("Uri: ", uri, "Method:", method);
     console.log("CATCHED ERROR: ", error);
     return {
       payload: null,
       uri: uri,
-      error: error,
+      error: {
+				status: error.cause,
+				message: error.message
+			},
     } as ResponseWrapper<T>;
   }
 };

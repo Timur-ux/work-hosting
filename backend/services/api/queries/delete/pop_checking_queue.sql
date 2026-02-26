@@ -1,2 +1,1 @@
-DELETE FROM checking_queue
-WHERE id = $1;
+DELETE FROM checking_queue WHERE id = $1

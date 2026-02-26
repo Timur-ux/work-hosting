@@ -43,49 +43,33 @@ PopCheckingQueueHandler::HandleRequestThrow(const HttpRequest &request,
     auto queueItem =
         res.AsSingleRow<CheckingQueueItem>(storages::postgres::kRowTag);
     if (action == "accept")
-      AcceptWork(queueItem, tr);
+      res = tr.Execute(sql::kAcceptWork, queueItem.queue_id);
     else if (action == "reject")
-      RejectWork(queueItem, tr);
+      res = tr.Execute(sql::kRejectWork, queueItem.queue_id);
     else if (action == "requeue")
-      RequeueWork(queueItem, tr);
+      res = tr.Execute(sql::kRequeueWork, queueItem.queue_id);
     else
       throw server::handlers::ClientError(
           ExternalBody{fmt::format("Given action: {} not valid!", action)});
+    if (res.RowsAffected() == 0) {
+      LOG_ERROR() << "Can't insert work data to another checking queue table: "
+                  << WorkTypeMapper.TryFindBySecond(queueItem.work_type) << ' '
+                  << queueItem.old_work_number << ' ' << queueItem.gv_name
+                  << "; Queue entry id: " << queueItem.queue_id;
+      throw server::handlers::InternalServerError{
+          ExternalBody{"Error while processing work"}};
+    }
 
     db_->Execute(storages::postgres::ClusterHostType::kMaster,
                  sql::kPopCheckingQueue, queueItem.queue_id);
+    tr.Commit();
+  } catch (server::handlers::CustomHandlerException &e) {
+    throw;
   } catch (std::exception &e) {
-    throw server::handlers::InternalServerError{ExternalBody{fmt::format(
-        "Postgres execute error when poping checking queue: {}", e.what())}};
+    throw server::handlers::InternalServerError{
+        ExternalBody{fmt::format("Error: {}", e.what())}};
   }
   std::string response = "Ok";
   return response;
-}
-
-void PopCheckingQueueHandler::AcceptWork(
-    const CheckingQueueItem &queuedWork,
-    storages::postgres::Transaction &tr) const {
-  auto res = tr.Execute(sql::kAcceptWork, queuedWork.queue_id);
-  if (res.RowsAffected() == 0)
-    throw server::handlers::InternalServerError(
-        ExternalBody{"Accepting work failed"});
-}
-
-void PopCheckingQueueHandler::RejectWork(
-    const CheckingQueueItem &queuedWork,
-    storages::postgres::Transaction &tr) const {
-  auto res = tr.Execute(sql::kRejectWork, queuedWork.queue_id);
-  if (res.RowsAffected() == 0)
-    throw server::handlers::InternalServerError(
-        ExternalBody{"Accepting work failed"});
-}
-
-void PopCheckingQueueHandler::RequeueWork(
-    const CheckingQueueItem &queuedWork,
-    storages::postgres::Transaction &tr) const {
-  auto res = tr.Execute(sql::kRequeueWork, queuedWork.queue_id);
-  if (res.RowsAffected() == 0)
-    throw server::handlers::InternalServerError(
-        ExternalBody{"Accepting work failed"});
 }
 } // namespace SERVICE_NAMESPACE

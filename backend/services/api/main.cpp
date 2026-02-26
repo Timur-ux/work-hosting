@@ -2,6 +2,7 @@
 #include "components/checking_queue_updater.hpp"
 #include "components/workHolder.hpp"
 #include "generated/static_config.yaml.hpp"
+#include "handlers/add_work.hpp"
 #include "handlers/get_checking_queue.hpp"
 #include "handlers/get_marks.hpp"
 #include "handlers/get_works.hpp"
@@ -14,6 +15,7 @@
 #include "handlers/user_role.hpp"
 #include "userver/clients/dns/component.hpp"
 #include "userver/server/handlers/auth/auth_checker_factory.hpp"
+#include "userver/server/handlers/log_level.hpp"
 #include "userver/storages/postgres/component.hpp"
 #include "userver/storages/secdist/component.hpp"
 #include "userver/storages/secdist/provider_component.hpp"
@@ -48,6 +50,8 @@ int main(int argc, const char *argw[]) {
 														.Append<UserRoleHandler>()
 														.Append<HelloHandler>()
 														.Append<CheckingQueueUpdater>()
+														.Append<AddWorkHandler>()
+														.Append<server::handlers::LogLevel>()
 														.Append<components::TestsuiteSupport>()
                             .Append<clients::dns::Component>();
   bool useInMemoryConfig = true;

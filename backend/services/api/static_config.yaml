@@ -1,21 +1,29 @@
 components_manager:
   task_processors:
     main-task-processor:
+      thread_name: main-worker
       worker_threads: 4
 
     fs-task-processor:
+      thread_name: fs-worker
+      worker_threads: 1
+
+    monitor-task-processor:
+      thread_name: monitor
       worker_threads: 1
 
   components:
     server:
       listener:
         port: 8080
+      listener-monitor:
+        port: 8081
 
     logging:
       loggers:
         default:
           file_path: '/logs/api.log'
-          level: debug
+          level: warning
           overflow_behavior: discard
 
     work-holder:
@@ -45,6 +53,11 @@ components_manager:
 
     default-secdist-provider:
       config: /etc/api/secure_data.json
+
+    handler-log-level:
+      path: /service/log-level/{level}
+      method: GET,PUT
+      task_processor: monitor-task-processor
 
     send-work-handler:
       path: /send
@@ -103,6 +116,17 @@ components_manager:
           - bearer
         scopes:
           - admin
+
+    add-work-handler:
+      path: /admin/work
+      method: POST
+      task_processor: main-task-processor
+      auth:
+        types:
+          - bearer
+        scopes:
+          - admin
+
 
     get-marks-handler:
       path: /student/marks
