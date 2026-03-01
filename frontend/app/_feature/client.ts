@@ -3,7 +3,11 @@ const getBaseUrl = () => {
   // return "http://localhost:80/api";
 };
 
-const baseUrl = getBaseUrl();
+export const getNginxUrl = () => {
+	return "http://nginx:80";
+}
+
+export const baseUrl = getBaseUrl();
 
 export type RequestError = {
   status: number;
@@ -16,38 +20,38 @@ export type ResponseWrapper<T> = {
   error: RequestError | null;
 };
 
-const Get = async (uri: string, token: string | null) => {
+const Get = async (url: string, token: string | null) => {
   if (token == null)
-    return await fetch(baseUrl + uri, {
+    return await fetch(url, {
       method: "GET",
       cache: "no-store",
     });
 
-  return await fetch(baseUrl + uri, {
+  return await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     method: "GET",
     cache: "no-store",
   });
 };
 
-const Post = async (uri: string, token: string | null, data: any) => {
+const Post = async (url: string, token: string | null, data: any) => {
   if (token == null)
-    return await fetch(baseUrl + uri, {
+    return await fetch(url, {
       method: "POST",
       body: JSON.stringify(data),
     });
 
-  return await fetch(baseUrl + uri, {
+  return await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(data),
   });
 };
 
-const Delete = async (uri: string, token: string | null) => {
-  if (token == null) return await fetch(baseUrl + uri, { method: "DELETE" });
+const Delete = async (url: string, token: string | null) => {
+  if (token == null) return await fetch(url, { method: "DELETE" });
 
-  return await fetch(uri, {
+  return await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     method: "DELETE",
   });
@@ -59,12 +63,14 @@ export const DoRequest = async <T extends unknown>(
   token: string | null,
   data: any,
   mapper: (data: any) => T,
+	isCustomUrl: boolean = false
 ) => {
   try {
+		const url = isCustomUrl ? uri : baseUrl + uri;
     let response: Response | null = null;
-    if (method == "GET") response = await Get(uri, token);
-    else if (method == "POST") response = await Post(uri, token, data);
-    else if (method == "DELETE") response = await Delete(uri, token);
+    if (method == "GET") response = await Get(url, token);
+    else if (method == "POST") response = await Post(url, token, data);
+    else if (method == "DELETE") response = await Delete(url, token);
     else throw "Undefined Method!";
 
     if (Math.floor(response.status / 100) != 2) {
