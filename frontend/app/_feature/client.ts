@@ -4,7 +4,7 @@ const getBaseUrl = () => {
 };
 
 export const getNginxUrl = () => {
-	return "http://nginx:80";
+	return "http://nginx:8080";
 }
 
 export const baseUrl = getBaseUrl();
