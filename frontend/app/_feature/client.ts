@@ -1,6 +1,6 @@
 const getBaseUrl = () => {
-  // return "http://api:8080";
-  return "http://localhost:80/api";
+  return "http://api:8080";
+  // return "http://localhost:80/api";
 };
 
 const baseUrl = getBaseUrl();
