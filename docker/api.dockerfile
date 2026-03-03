@@ -25,7 +25,7 @@ RUN ldd /app/build-release/services/api/api | grep "=>" | awk '{print $3}' | xar
 
 FROM ubuntu:24.04 AS service
 
-RUN if [ ! -z $(id 1000 | grep "no such" ) ]; then \
+RUN if [ ! -z "$(id 1000 2>&1 | grep 'no such')" ]; then \
 		useradd -m -u 1000 api;\
 	else \
 		usermod --login api --move-home --home /home/api $(getent passwd 1000 | cut -d ':' -f1);\

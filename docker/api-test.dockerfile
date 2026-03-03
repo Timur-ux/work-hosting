@@ -3,7 +3,7 @@ FROM ghcr.io/userver-framework/ubuntu-24.04-userver:v2.14 AS generator
 # install zeromq and cppzmq wrapper
 RUN apt install -y libzmq5 cppzmq-dev
 
-RUN if $(id 1000 | grep "no such"); then useradd -u 1000 api-test; fi
+RUN if [ ! -z "$(id 1000 2>&1 | grep 'no such')" ] ; then useradd -u 1000 api-test; fi
 USER 1000
 
 WORKDIR /app
