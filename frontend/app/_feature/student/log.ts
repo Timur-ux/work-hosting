@@ -1,5 +1,5 @@
 "use server";
-import { ResponseWrapper } from "../client";
+import { DoRequest, getNginxUrl, ResponseWrapper } from "../client";
 type WorkData = {
   work_type: "LR" | "KP";
   old_work_number: number;
@@ -8,15 +8,21 @@ type WorkData = {
 const GetLog: (
   username: string,
   work: WorkData,
-) => Promise<ResponseWrapper<string>> = async (username: string, work: WorkData) => {
-  const uri = `http://localhost/logs/${work.work_type}${work.old_work_number}-${username}.log`;
+) => Promise<ResponseWrapper<string>> = async (
+  username: string,
+  work: WorkData,
+) => {
+  const uri = ``;
   try {
-    const response = await fetch(uri);
-    return {
-      error: null,
-      uri: uri,
-      payload: await response.text(),
-    };
+    const response = DoRequest(
+      "GET",
+      `${getNginxUrl()}/logs/${work.work_type}${work.old_work_number}-${username}.log`,
+      null,
+      null,
+      (d) => d,
+			true
+    );
+    return await response;
   } catch (e) {
     return {
       error: e,

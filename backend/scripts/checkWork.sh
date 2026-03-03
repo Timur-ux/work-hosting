@@ -100,17 +100,12 @@ doStep() {
 # step 0: fetching repo
 fetchRepository() {
 	local gvSshLink="ssh://git@gitverse.ru:2222/${organizationName}/${workName}.git"
-	echo "a"
 	if [[ -d "${worksDir}/${workName}" ]]; then
-		echo "a1"
 		cd "${worksDir}/${workName}" && \
 			git clean -fd && git fetch origin && git reset --hard
-		echo "a2"
 		return $?
 	fi
-	echo "b1"
 	message=$(git clone "$gvSshLink" "${worksDir}/${workName}" 2>/dev/stdout)
-	echo "b2"
 	if [ "$?" != "0" ]; then
 		echo "$message"
 		return 1
