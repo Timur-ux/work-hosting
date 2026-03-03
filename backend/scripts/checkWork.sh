@@ -3,6 +3,7 @@
 shopt -s nullglob
 set -o pipefail
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 user="checker"
 if [ "$(whoami)" == "root" ]; then
 	echo "No use under root allowed"
@@ -241,15 +242,11 @@ checkMakeBuild() {
 		echo "$message"
 		return 1
 	fi
-
-	if [ ! -f ./main.out ]; then
-		echo "Make build success but main.out file not found in solution/ directory!"
-		return 1
-	fi
-
 	return 0
 }
 doStep "Сборка программы" checkMakeBuild
+
+doStep "Специфичные для ${workType}${workNumber} проверки" "$SCRIPT_DIR/workSpecificChecks/${workType}${workNumber}.sh"
 
 
 # send work to checking queue if all steps passed done

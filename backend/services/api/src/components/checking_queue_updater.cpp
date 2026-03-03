@@ -27,71 +27,76 @@ CheckingQueueUpdater::CheckingQueueUpdater(
               .GetCluster()) {
   std::string addr = config["listen-addr"].As<std::string>();
   int recieveTimeout = config["recieve-timeout-ms"].As<int>();
-	std::string taskProcessorName = config["task_processor"].As<std::string>();
-	auto& taskProcessor = context.GetTaskProcessor(taskProcessorName);
+  std::string taskProcessorName = config["task_processor"].As<std::string>();
+  auto &taskProcessor = context.GetTaskProcessor(taskProcessorName);
 
   listenSocket_.bind(addr);
   listenSocket_.set(::zmq::sockopt::rcvtimeo, recieveTimeout);
 
-  task_ = utils::Async(taskProcessor, "checking-queue-updater-func", [&db = db_,
-                                                       &socket =
-                                                           listenSocket_]() {
-    using namespace userver::server::handlers;
-    ::zmq::message_t msg;
-    while (true) {
-      auto ret = socket.recv(msg);
-			if(ret.has_value())
-				LOG_INFO() << "Accept request to add to checking queue";
-      if (!ret)
-        continue;
+  task_ = utils::Async(
+      taskProcessor, "checking-queue-updater-func",
+      [&db = db_, &socket = listenSocket_]() {
+        using namespace userver::server::handlers;
+        ::zmq::message_t msg;
+        while (true) {
+          auto ret = socket.recv(msg);
+          if (ret.has_value())
+            LOG_INFO() << "Accept request to add to checking queue";
+          if (!ret)
+            continue;
 
-      try {
-        auto workRequest = ::Work::from_string(msg.to_string_view());
-        if (IsWorkAlreadyInQueue(db, workRequest))
-          continue;
+          try {
+            auto workRequest = ::Work::from_string(msg.to_string_view());
+            if (IsWorkAlreadyInQueue(db, workRequest))
+              continue;
 
-        auto tr = db->Begin("update-checking-queue-if-needed",
-                            storages::postgres::ClusterHostType::kMaster, {});
+            auto tr =
+                db->Begin("update-checking-queue-if-needed",
+                          storages::postgres::ClusterHostType::kMaster, {});
 
-        auto res = tr.Execute(sql::kFindStudent, workRequest.gvName());
-        if (!res.Size()) {
-          LOG_WARNING() << "Student not found! Work: "
-                        << workRequest.to_string();
-          continue;
+            auto res = tr.Execute(sql::kFindStudent, workRequest.gvName());
+            if (!res.Size()) {
+              LOG_WARNING()
+                  << "Student not found! Work: " << workRequest.to_string();
+              continue;
+            }
+            auto student =
+                res.AsSingleRow<Student>(storages::postgres::kRowTag);
+
+            res =
+                tr.Execute(sql::kFindWork,
+                           *WorkTypeMapper.TryFind(workRequest.typeAsString()),
+                           int(workRequest.number()));
+            if (!res.Size()) {
+              LOG_WARNING()
+                  << "Work not found! Work: " << workRequest.to_string();
+              continue;
+            }
+            auto workData = res.AsSingleRow<Work>(storages::postgres::kRowTag);
+
+            res = tr.Execute(sql::kAddCheckingQueue, student.id, workData.id);
+            if (!res.RowsAffected()) {
+              LOG_WARNING() << "Unable to add work to checking queue";
+              continue;
+            }
+            tr.Commit();
+            LOG_INFO() << "Work of student " << student.gv_name
+                       << " added to checking queue";
+          } catch (std::exception &e) {
+            LOG_ERROR() << "Undefinded error while processing message: "
+                        << msg.to_string_view() << ": " << e.what();
+          }
         }
-        auto student = res.AsSingleRow<Student>(storages::postgres::kRowTag);
-
-        auto workType = workRequest.type() == ::Work::Type::LR ? "LR" : "KP";
-        res = tr.Execute(sql::kFindWork, *WorkTypeMapper.TryFind(workType),
-                         int(workRequest.number()));
-        if (!res.Size()) {
-          LOG_WARNING() << "Work not found! Work: " << workRequest.to_string();
-          continue;
-        }
-        auto workData = res.AsSingleRow<Work>(storages::postgres::kRowTag);
-
-        res = tr.Execute(sql::kAddCheckingQueue, student.id, workData.id);
-        if (!res.RowsAffected()) {
-          LOG_WARNING() << "Unable to add work to checking queue";
-          continue;
-        }
-				tr.Commit();
-				LOG_INFO() << "Work of student " << student.gv_name <<" added to checking queue";
-      } catch (std::exception &e) {
-        LOG_ERROR() << "Undefinded error while processing message: "
-                    << msg.to_string_view();
-      }
-    }
-  });
+      });
 }
 
 bool CheckingQueueUpdater::IsWorkAlreadyInQueue(
     storages::postgres::ClusterPtr db, const ::Work &work) {
 
-  auto workType = work.type() == ::Work::Type::LR ? "LR" : "KP";
   auto res = db->Execute(storages::postgres::ClusterHostType::kSlave,
                          sql::kIsQueueEntryExists, work.gvName(),
-                         *WorkTypeMapper.TryFind(workType), int(work.number()));
+                         *WorkTypeMapper.TryFind(work.typeAsString()),
+                         int(work.number()));
 
   if (res.AsSingleRow<bool>()) {
     LOG_WARNING() << "Work already exists in queue: " << work.to_string();

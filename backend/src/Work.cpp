@@ -39,7 +39,7 @@ Work Work::from_string(std::string_view s) {
 	Type type;
 	if(s.starts_with("LR")) 
 		type = Type::LR;
-	else if (s.starts_with("KP") == 0)
+	else if (s.starts_with("KP"))
 	 type = Type::KP;
 	else
 		throw std::invalid_argument(std::format("Work type is invalid! Expected LR or KP but given: {}", s.substr(0, 2)));
