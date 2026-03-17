@@ -177,7 +177,7 @@ checkReportAndApplications() {
 	fi
 	applicationName="Приложение${reportName}"
 	if [[ ! -f "./report/$applicationName" ]]; then
-		echo "Expected application with name ./solution/report/$reportName but it is not found!"
+		echo "Expected application with name ./solution/report/$applicationName but it is not found!"
 		return 1
 	fi
 }
