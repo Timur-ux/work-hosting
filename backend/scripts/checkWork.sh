@@ -237,7 +237,7 @@ checkMakeBuild() {
 		return 1
 	fi
 
-	message=$(CFLAGS="-Wextra -Wall -Wfloat-equal -pedantic" make 2>/dev/stdout)
+	message=$(CFLAGS="-Wextra -Werror -Wall -Wfloat-equal -pedantic" make 2>/dev/stdout)
 	if [ "$?" != "0" ]; then
 		echo "$message"
 		return 1
