@@ -30,6 +30,8 @@ RUN tar --overwrite -xf /tmp/service-deps.tar -C / && rm /tmp/service-deps.tar
 
 # copy scripts
 COPY ./backend/scripts /home/checker/scripts
+# copy git config
+COPY ./backend/services/checker/.gitconfig /home/checker/.gitconfig
 
 USER checker
 

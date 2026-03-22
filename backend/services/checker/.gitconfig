@@ -1,0 +1,6 @@
+; default checker git config
+[pull]
+        rebase = false
+[user]
+        name = checker
+        email = checker@no-reply.com
