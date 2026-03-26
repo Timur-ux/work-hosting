@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
-if [[ ! -f main.out ]]; then
+file="main.out"
+if [[ ! -f $file ]]; then
 	echo "No $file file found!"
 	exit 1
 fi
