@@ -207,12 +207,12 @@ fi
 # step 4: check for files outside solution folder
 
 printFilesOutsideSolutionDir() {
-  local badFiles=0
-  git diff --name-only origin/solution origin/master -- | while read line; do
-    echo "$line" >>/tmp/log.log
-    if [[ "$line" != solution* && "$line" != \"solution* ]]; then
-      echo "$(pwd)/$line not in solution/ directory!"
-      badFiles=$(($badFiles + 1))
+	 local badFiles=0
+	 changedFiles=$(git diff --name-only origin/solution origin/master --)
+   for line in $changedFiles; do
+    if [[ $line != solution* && $line != \"solution* ]]; then
+      echo "$(pwd)/$line not in solution/ directory but it is changed!"
+      badFiles=$(( $badFiles + 1 ))
     fi
   done
   return $badFiles
