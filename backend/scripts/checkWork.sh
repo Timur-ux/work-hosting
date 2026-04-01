@@ -240,13 +240,13 @@ checkMakeBuild() {
     return 1
   fi
 
-  message=$(sed 's/gcc/gcc $(CFLAGS)/' -i ./Makefile 2>/dev/stdout)
+  message=$(sed 's/gcc/gcc $(SOME_BUILD_FLAGS)/' -i ./Makefile 2>/dev/stdout)
   if [ "$?" != "0" ]; then
     echo "$message"
     return 1
   fi
 
-  message=$(CFLAGS="-Wextra -Werror -Wall -Wfloat-equal -pedantic" make 2>/dev/stdout)
+  message=$(SOME_BUILD_FLAGS="-Wextra -Werror -Wall -Wfloat-equal -pedantic" make 2>/dev/stdout)
   if [ "$?" != "0" ]; then
     echo "$message"
     return 1
