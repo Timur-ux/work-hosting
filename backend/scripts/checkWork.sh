@@ -240,6 +240,7 @@ checkMakeBuild() {
     return 1
   fi
 
+	find . -delete -name "*.o" -or -name "*.out" -or -name "*.exe"
   message=$(sed 's/gcc/gcc $(SOME_BUILD_FLAGS)/' -i ./Makefile 2>/dev/stdout)
   if [ "$?" != "0" ]; then
     echo "$message"
